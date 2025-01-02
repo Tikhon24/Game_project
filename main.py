@@ -1,15 +1,19 @@
 import pygame
 
+SIZE = WIDTH, HEIGHT = (1600, 900)
+
 
 def main():
+    # инициализация игры
     pygame.init()
 
-    size = width, height = (600, 600)
-    screen = pygame.display.set_mode(size)
+    screen = pygame.display.set_mode(SIZE)
     pygame.display.set_caption('Игра')
 
     running = True
+    # игровой цикл
     while running:
+        # обработка событий
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
