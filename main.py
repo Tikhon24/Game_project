@@ -53,7 +53,9 @@ class Settings:
 
     class Generator:
         def __init__(self):
-            pass
+            self.directory = 'generator'
+            self.health = 5
+            self.delay = 10000
 
     class Wall:
         def __init__(self):
