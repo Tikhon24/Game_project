@@ -2,6 +2,8 @@ import pygame
 import os
 import sys
 
+FPS = 30
+
 SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
 TILE_SIZE_BOARD = 150
@@ -36,6 +38,13 @@ class BaseCharacter:
     def is_alive(self):
         return self.health > 0
 
+    def get_position(self):
+        return self.x, self.y
+
+    def set_position(self, x, y):
+        self.x = x
+        self.y = y
+
 
 class Settings:
     def __init__(self):
@@ -68,6 +77,12 @@ class Settings:
             self.health = 8
             self.cost = 50
 
+    class Dino:
+        def __init__(self):
+            self.directory = "dino"
+            self.health = 5
+            self.speed = 0.2  # тайла
+            self.delay = 3000
 
 class Board:
     # создание поля
@@ -149,12 +164,11 @@ class Generator(BaseCharacter):
 
 
 class Enemy(BaseCharacter):
-    def __init__(self, x, y, health=5, enemy_speed=0.2, damage=1, delay=3000):
+    def __init__(self, x, y, health, speed, damage, delay):
         super().__init__(health, x, y)
         self.damage = damage
-        self.enemy_speed = enemy_speed
+        self.speed = speed
         self.delay = delay
-
 
 class Wave:
     pass
@@ -162,7 +176,6 @@ class Wave:
 
 class Spawn:
     pass
-
 
 class Game:
     def __init__(self, game_board, shop, settings):
@@ -228,6 +241,8 @@ def main():
     settings = Settings()
     game = Game(game_board, shop, settings)
 
+    clock = pygame.time.Clock()
+
     running = True
     game_paused = False
     # игровой цикл
@@ -252,6 +267,9 @@ def main():
             game.render(screen)
             pygame.display.flip()
 
+
+
+        clock.tick(fps)
 
 if __name__ == '__main__':
     main()
