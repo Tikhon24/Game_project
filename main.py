@@ -25,16 +25,23 @@ def load_image(name, directory, colorkey=None):
 
 
 class BaseCharacter:
-    def __init__(self, health, x, y):
+    def __init__(self, health, x, y, directory):
         self.health = health
         self.x = x
         self.y = y
+        self.directory = directory
 
     def change_health(self, damage):
         self.health -= self.health - damage
 
     def is_alive(self):
         return self.health > 0
+
+    def __str__(self):
+        return self.directory
+
+    def __repr__(self):
+        return str(self.directory)
 
 
 class Settings:
@@ -61,6 +68,7 @@ class Settings:
             self.health = 5
             self.delay = 10000
             self.cost = 50
+            self.plus_cost = 25
 
     class Wall:
         def __init__(self):
@@ -113,11 +121,17 @@ class GameBoard(Board):
 
 
 class Shop(Board):
-    def __init__(self, width, height, left, top, tile_size):
+    def __init__(self, width, height, left, top, tile_size, units):
         super().__init__(width, height, left, top, tile_size)
+        self.units = [*units]
+        self.board[0] = [unit for unit in units] + [0, 0, 0]
 
     def on_click(self, cell):
         pass
+
+    def get_unit(self, pos):
+        x, y = pos
+        return self.board[y][x]
 
 
 class Bullet:
@@ -133,24 +147,29 @@ class Bullet:
 
 
 class Turret(BaseCharacter):
-    def __init__(self, x, y, health=5, delay=5000):
-        super().__init__(health, x, y)
+    def __init__(self, x, y, directory, cost, health, delay):
+        super().__init__(health, x, y, directory)
         self.delay = delay
+        self.cost = cost
 
 
 class Wall(BaseCharacter):
-    def __init__(self, x, y, health=8):
-        super().__init__(health, x, y)
+    def __init__(self, x, y, directory, health, cost):
+        super().__init__(health, x, y, directory)
+        self.cost = cost
 
 
 class Generator(BaseCharacter):
-    def __init__(self, x, y, health=5):
-        super().__init__(health, x, y)
+    def __init__(self, x, y, directory, health, delay, plus_cost, cost):
+        super().__init__(health, x, y, directory)
+        self.delay = delay
+        self.plus_cost = plus_cost
+        self.cost = cost
 
 
 class Enemy(BaseCharacter):
-    def __init__(self, x, y, health=5, enemy_speed=0.2, damage=1, delay=3000):
-        super().__init__(health, x, y)
+    def __init__(self, x, y, directory, health=5, enemy_speed=0.2, damage=1, delay=3000):
+        super().__init__(health, x, y, directory)
         self.damage = damage
         self.enemy_speed = enemy_speed
         self.delay = delay
@@ -200,18 +219,36 @@ class Game:
             y, x = game_board_cell
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
-                pass
+                self.game_board.board[y][x] = self.current_unit
 
         elif shop_cell:
             if not up:
                 y, x = shop_cell
-                self.current_unit = self.shop.board[y][x]
+                self.current_unit = self.shop.get_unit((x, y))
                 self.is_hold = True
                 # привязка спрайта к курсору
 
         else:
             self.is_hold = False
             self.current_unit = None
+
+
+def init_shop(settings: Settings):
+    result = []
+
+    gen = settings.Generator()
+    generator = Generator(0, 0, gen.directory, gen.health, gen.delay, gen.plus_cost, gen.cost)
+    result.append(generator)
+
+    wt = settings.WaterTurret()
+    watter_turret = Turret(0, 0, wt.directory, wt.cost, wt.health, wt.delay)
+    result.append(watter_turret)
+
+    wll = settings.Wall()
+    wall = Wall(0, 0, wll.directory, wll.health, wll.cost)
+    result.append(wall)
+
+    return result
 
 
 def main():
@@ -223,10 +260,15 @@ def main():
 
     background_image = load_image('background.png', DIR_DATA)
 
-    game_board = Board(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
-    shop = Shop(6, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP)
     settings = Settings()
+
+    units_for_shop = init_shop(settings)
+
+    game_board = Board(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
+    shop = Shop(6, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP, units_for_shop)
     game = Game(game_board, shop, settings)
+
+    print(shop.units)
 
     running = True
     game_paused = False
