@@ -48,7 +48,7 @@ class Board:
         # значения по умолчанию
         self.left = 540
         self.top = 255
-        self.cell_size = 140
+        self.cell_size = 150
 
     # настройка внешнего вида
     def set_view(self, left, top, cell_size):
