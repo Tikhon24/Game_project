@@ -43,7 +43,7 @@ class Settings:
 
     class WaterTurret:
         def __init__(self):
-            pass
+            self.directory = ''
 
     class WaterBullet:
         def __init__(self):
@@ -217,6 +217,7 @@ def main():
     game = Game(game_board, shop, settings)
 
     running = True
+    game_paused = False
     # игровой цикл
     while running:
         # обработка событий
@@ -227,15 +228,17 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
+                    game_paused = not game_paused
                     continue
             if event.type == pygame.MOUSEBUTTONDOWN:
                 game.get_click(event.pos, False)
             if event.type == pygame.MOUSEBUTTONUP:
                 game.get_click(event.pos, True)
 
-        screen.blit(background_image, (0, 0))
-        game.render(screen)
-        pygame.display.flip()
+        if not game_paused:
+            screen.blit(background_image, (0, 0))
+            game.render(screen)
+            pygame.display.flip()
 
 
 if __name__ == '__main__':
