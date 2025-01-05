@@ -4,11 +4,14 @@ import sys
 
 SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
-TILE_SIZE = 150
+TILE_SIZE_BOARD = 150
+TILE_SIZE_SHOP = 145
 DIR_SPAWN = 'spawn'
 DIR_DATA = 'data'
-LEFT_GAME_BOARD = 540
-TOP_GAME_BOARD = 250
+LEFT_GAME_BOARD = 541
+TOP_GAME_BOARD = 251
+LEFT_SHOP = 845
+TOP_SHOP = 37
 
 
 def load_image(name, directory, colorkey=None):
@@ -97,16 +100,10 @@ class GameBoard(Board):
     def on_click(self, cell):
         pass
 
-    def get_click(self, mouse_pos):
-        cell = self.get_cell(mouse_pos)
-        x, y = cell
-        if x <= 8:
-            self.on_click(cell)
-
 
 class Shop(Board):
-    def __init__(self):
-        pass
+    def __init__(self, width, height, left, top, tile_size):
+        super().__init__(width, height, left, top, tile_size)
 
     def on_click(self, cell):
         pass
@@ -214,8 +211,8 @@ def main():
 
     background_image = load_image('background.png', DIR_DATA)
 
-    game_board = Board(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE)
-    shop = Shop()
+    game_board = Board(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
+    shop = Shop(6, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP)
     settings = Settings()
     game = Game(game_board, shop, settings)
 
