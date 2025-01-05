@@ -43,7 +43,9 @@ class Settings:
 
     class WaterTurret:
         def __init__(self):
-            self.directory = ''
+            self.directory = 'bucket'
+            self.health = 5
+            self.delay = 5000
 
     class WaterBullet:
         def __init__(self):
