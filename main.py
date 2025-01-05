@@ -49,7 +49,9 @@ class Settings:
 
     class WaterBullet:
         def __init__(self):
-            pass
+            self.directory = 'bucket_bullet'
+            self.speed = 1
+            self.damage = 1
 
     class Generator:
         def __init__(self):
@@ -59,7 +61,8 @@ class Settings:
 
     class Wall:
         def __init__(self):
-            pass
+            self.directory = 'wall'
+            self.health = 8
 
 
 class Board:
