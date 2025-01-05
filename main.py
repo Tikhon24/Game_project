@@ -2,6 +2,9 @@ import pygame
 
 SIZE = WIDTH, HEIGHT = (1920, 1000)
 MAX_WAVE = 20
+TILE_SIZE = 150
+DIR_SPAWN = 'spawn'
+DIR_DATA = 'data'
 
 
 class BaseCharacter:
