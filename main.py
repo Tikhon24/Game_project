@@ -8,7 +8,7 @@ TILE_SIZE = 150
 DIR_SPAWN = 'spawn'
 DIR_DATA = 'data'
 LEFT_GAME_BOARD = 540
-TOP_GAME_BOARD = 255
+TOP_GAME_BOARD = 250
 
 
 def load_image(name, directory, colorkey=None):
@@ -41,14 +41,14 @@ class Settings:
 
 class Board:
     # создание поля
-    def __init__(self, width, height):
+    def __init__(self, width, height, left, top, tile_size):
         self.width = width
         self.height = height
         self.board = [[0] * width for _ in range(height)]
         # значения по умолчанию
-        self.left = 540
-        self.top = 255
-        self.cell_size = 150
+        self.left = left
+        self.top = top
+        self.cell_size = tile_size
 
     # настройка внешнего вида
     def set_view(self, left, top, cell_size):
@@ -73,6 +73,11 @@ class Board:
         cell_y = (y - self.top) // self.cell_size
         return cell_y, cell_x
 
+
+class GameBoard(Board):
+    def __init__(self, width, height, left, top, tile_size):
+        super().__init__(width, height, left, top, tile_size)
+
     def on_click(self, cell):
         pass
 
@@ -81,6 +86,11 @@ class Board:
         x, y = cell
         if x <= 8:
             self.on_click(cell)
+
+
+class Shop(Board):
+    def __init__(self):
+        pass
 
 
 class Bullet:
