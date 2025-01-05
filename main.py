@@ -42,9 +42,17 @@ class Settings:
         def __init__(self):
             pass
 
-    class Generator:
-        pass
+    class WaterBullet:
+        def __init__(self):
+            pass
 
+    class Generator:
+        def __init__(self):
+            pass
+
+    class Wall:
+        def __init__(self):
+            pass
 
 
 class Board:
