@@ -108,6 +108,9 @@ class Shop(Board):
     def __init__(self):
         pass
 
+    def on_click(self, cell):
+        pass
+
 
 class Bullet:
     def __init__(self, bullet_speed=1, bullet_damage=1):
@@ -163,16 +166,27 @@ class Game:
 
     def create_unit(self, pos, unit):
         x, y = pos
-        self.board.board[y][x] = unit(x, y)
+        self.game_board.board[y][x] = unit(x, y)
 
     def render(self, screen, ):
-        self.board.render(screen)
+        self.game_board.render(screen)
+        self.shop.render(screen)
 
     def is_win(self):
         pass
 
     def is_lose(self):
         pass
+
+    def get_click(self, mouse_pos):
+        game_board_cell = self.game_board.get_cell(mouse_pos)
+        shop_cell = self.shop.get_cell(mouse_pos)
+
+        if game_board_cell:
+            pass
+
+        if shop_cell:
+            pass
 
 
 def main():
@@ -184,9 +198,10 @@ def main():
 
     background_image = load_image('background.png', DIR_DATA)
 
-    board = Board(9, 5)
+    game_board = Board(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE)
+    shop = Shop()
     settings = Settings()
-    game = Game(board, settings)
+    game = Game(game_board, shop, settings)
 
     running = True
     # игровой цикл
