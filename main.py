@@ -168,7 +168,7 @@ class Game:
         x, y = pos
         self.game_board.board[y][x] = unit(x, y)
 
-    def render(self, screen, ):
+    def render(self, screen):
         self.game_board.render(screen)
         self.shop.render(screen)
 
@@ -215,6 +215,8 @@ def main():
                 if event.key == pygame.K_ESCAPE:
                     running = False
                     continue
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                game.get_click(event.pos)
 
         screen.blit(background_image, (0, 0))
         game.render(screen)
