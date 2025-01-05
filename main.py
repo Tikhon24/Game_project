@@ -2,7 +2,7 @@ import pygame
 import os
 import sys
 
-SIZE = WIDTH, HEIGHT = (1920, 1000)
+SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
 TILE_SIZE = 150
 DIR_SPAWN = 'spawn'
@@ -168,6 +168,7 @@ def main():
                 running = False
                 continue
 
+        screen.blit(background_image, (0, 0))
         board.render(screen)
         pygame.display.flip()
 
