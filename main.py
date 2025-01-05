@@ -146,7 +146,7 @@ class Spawn:
 
 
 class Game:
-    def __init__(self, game_board, shop,  settings):
+    def __init__(self, game_board, shop, settings):
         self.game_board = game_board
         self.shop = shop
         self.settings = settings
