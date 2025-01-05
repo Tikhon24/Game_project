@@ -44,9 +44,9 @@ class Board:
         self.height = height
         self.board = [[0] * width for _ in range(height)]
         # значения по умолчанию
-        self.left = 250
-        self.top = 180
-        self.cell_size = 150
+        self.left = 540
+        self.top = 255
+        self.cell_size = 140
 
     # настройка внешнего вида
     def set_view(self, left, top, cell_size):
@@ -155,7 +155,7 @@ def main():
 
     background_image = load_image('background.png', DIR_DATA)
 
-    board = Board(11, 5)
+    board = Board(9, 5)
     settings = Settings()
     game = Game(board, settings)
 
