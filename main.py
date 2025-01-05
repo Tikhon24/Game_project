@@ -40,12 +40,14 @@ class BaseCharacter:
 class Settings:
     def __init__(self):
         self.start_money = 100
+        self.hp = 20
 
     class WaterTurret:
         def __init__(self):
             self.directory = 'bucket'
             self.health = 5
             self.delay = 5000
+            self.cost = 100
 
     class WaterBullet:
         def __init__(self):
@@ -58,11 +60,13 @@ class Settings:
             self.directory = 'generator'
             self.health = 5
             self.delay = 10000
+            self.cost = 50
 
     class Wall:
         def __init__(self):
             self.directory = 'wall'
             self.health = 8
+            self.cost = 50
 
 
 class Board:
@@ -166,6 +170,7 @@ class Game:
         self.shop = shop
         self.settings = settings
         self.total_money = settings.start_money
+        self.hp = settings.hp
         self.wave_counter = 0
         self.is_hold = False
         self.current_unit = None
