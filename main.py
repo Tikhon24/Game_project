@@ -38,6 +38,14 @@ class Settings:
     def __init__(self):
         self.start_money = 100
 
+    class WaterTurret:
+        def __init__(self):
+            pass
+
+    class Generator:
+        pass
+
+
 
 class Board:
     # создание поля
@@ -138,8 +146,9 @@ class Spawn:
 
 
 class Game:
-    def __init__(self, board, settings):
-        self.board = board
+    def __init__(self, game_board, shop,  settings):
+        self.game_board = game_board
+        self.shop = shop
         self.settings = settings
         self.total_money = settings.start_money
         self.wave_counter = 0
@@ -148,7 +157,7 @@ class Game:
         x, y = pos
         self.board.board[y][x] = unit(x, y)
 
-    def render(self, screen):
+    def render(self, screen, ):
         self.board.render(screen)
 
     def is_win(self):
