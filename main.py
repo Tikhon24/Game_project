@@ -38,6 +38,14 @@ class Settings:
     def __init__(self):
         self.start_money = 100
 
+    class WaterTurret:
+        def __init__(self):
+            pass
+
+    class Generator:
+        pass
+
+
 
 class Board:
     # создание поля
