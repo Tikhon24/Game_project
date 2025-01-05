@@ -163,6 +163,8 @@ class Game:
         self.settings = settings
         self.total_money = settings.start_money
         self.wave_counter = 0
+        self.is_hold = False
+        self.current_unit = None
 
     def create_unit(self, pos, unit):
         x, y = pos
@@ -178,15 +180,29 @@ class Game:
     def is_lose(self):
         pass
 
-    def get_click(self, mouse_pos):
+    def get_click(self, mouse_pos, up):
+        if not up:
+            self.is_hold = False
+
         game_board_cell = self.game_board.get_cell(mouse_pos)
         shop_cell = self.shop.get_cell(mouse_pos)
 
         if game_board_cell:
-            pass
+            y, x = game_board_cell
+            if self.current_unit is not None and self.is_hold:
+                # создаем юнита в клетке, отвязываем спрайт от курсора
+                pass
 
-        if shop_cell:
-            pass
+        elif shop_cell:
+            if not up:
+                y, x = shop_cell
+                self.current_unit = self.shop.board[y][x]
+                self.is_hold = True
+                # привязка спрайта к курсору
+
+        else:
+            self.is_hold = False
+            self.current_unit = None
 
 
 def main():
@@ -216,7 +232,9 @@ def main():
                     running = False
                     continue
             if event.type == pygame.MOUSEBUTTONDOWN:
-                game.get_click(event.pos)
+                game.get_click(event.pos, False)
+            if event.type == pygame.MOUSEBUTTONUP:
+                game.get_click(event.pos, True)
 
         screen.blit(background_image, (0, 0))
         game.render(screen)
