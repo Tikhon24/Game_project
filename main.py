@@ -136,8 +136,8 @@ class Game:
         x, y = pos
         self.board.board[y][x] = unit(x, y)
 
-    def render(self):
-        self.board.render()
+    def render(self, screen):
+        self.board.render(screen)
 
     def is_win(self):
         pass
@@ -167,9 +167,13 @@ def main():
             if event.type == pygame.QUIT:
                 running = False
                 continue
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    running = False
+                    continue
 
         screen.blit(background_image, (0, 0))
-        board.render(screen)
+        game.render(screen)
         pygame.display.flip()
 
 
