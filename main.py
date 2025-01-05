@@ -7,6 +7,8 @@ MAX_WAVE = 20
 TILE_SIZE = 150
 DIR_SPAWN = 'spawn'
 DIR_DATA = 'data'
+LEFT_GAME_BOARD = 540
+TOP_GAME_BOARD = 255
 
 
 def load_image(name, directory, colorkey=None):
