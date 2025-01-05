@@ -1,10 +1,22 @@
 import pygame
+import os
+import sys
 
 SIZE = WIDTH, HEIGHT = (1920, 1000)
 MAX_WAVE = 20
 TILE_SIZE = 150
 DIR_SPAWN = 'spawn'
 DIR_DATA = 'data'
+
+
+def load_image(name, directory, colorkey=None):
+    fullname = os.path.join(directory, name)
+    # если файл не существует, то выходим
+    if not os.path.isfile(fullname):
+        print(f"Файл с изображением '{fullname}' не найден")
+        sys.exit()
+    image = pygame.image.load(fullname)
+    return image
 
 
 class BaseCharacter:
@@ -141,6 +153,8 @@ def main():
     screen = pygame.display.set_mode(SIZE)
     pygame.display.set_caption('АТЕ')
 
+    background_image = load_image('background.png', DIR_DATA)
+
     board = Board(11, 5)
     settings = Settings()
     game = Game(board, settings)
@@ -154,7 +168,6 @@ def main():
                 running = False
                 continue
 
-        screen.fill((0, 0, 0))
         board.render(screen)
         pygame.display.flip()
 
