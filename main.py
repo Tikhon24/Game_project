@@ -38,6 +38,12 @@ class BaseCharacter:
     def is_alive(self):
         return self.health > 0
 
+    def get_position(self):
+        return self.x, self.y
+
+    def set_position(self, position):
+        self.x, self.y = position
+
     def render(self, screen, left, top, tile):
         x = left + self.x * tile
         y = top + self.y * tile
@@ -81,6 +87,14 @@ class Settings:
             self.directory = 'wall'
             self.health = 8
             self.cost = 50
+
+    class Dino:
+        def __init__(self):
+            self.directory = 'dino'
+            self.health = 5
+            self.damage = 1
+            self.delay = 3000
+            self.speed = 0.2
 
 
 class Board:
