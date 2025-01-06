@@ -152,11 +152,16 @@ class Turret(BaseCharacter):
         self.delay = delay
         self.cost = cost
 
+    def copy(self):
+        return Turret(self.x, self.y, self.directory, self.cost, self.health, self.delay)
 
 class Wall(BaseCharacter):
     def __init__(self, x, y, directory, health, cost):
         super().__init__(health, x, y, directory)
         self.cost = cost
+
+    def copy(self):
+        return Wall(self.x, self.y, self.directory, self.health, self.cost)
 
 
 class Generator(BaseCharacter):
@@ -165,6 +170,9 @@ class Generator(BaseCharacter):
         self.delay = delay
         self.plus_cost = plus_cost
         self.cost = cost
+
+    def copy(self):
+        return Generator(self.x, self.y, self.directory, self.health, self.delay, self.plus_cost, self.cost)
 
 
 class Enemy(BaseCharacter):
@@ -196,7 +204,7 @@ class Game:
 
     def create_unit(self, pos, unit):
         x, y = pos
-        self.game_board.board[y][x] = unit(x, y)
+        return unit.copy()
 
     def render(self, screen):
         self.game_board.render(screen)
@@ -219,7 +227,8 @@ class Game:
             y, x = game_board_cell
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
-                self.game_board.board[y][x] = self.create_unit(self.current_unit)
+                self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
+                print(self.game_board.board)
 
         elif shop_cell:
             if not up:
