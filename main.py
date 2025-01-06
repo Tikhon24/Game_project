@@ -12,6 +12,7 @@ LEFT_GAME_BOARD = 541
 TOP_GAME_BOARD = 251
 LEFT_SHOP = 845
 TOP_SHOP = 37
+FPS = 30
 
 
 def load_image(name, directory, colorkey=None):
@@ -36,6 +37,11 @@ class BaseCharacter:
 
     def is_alive(self):
         return self.health > 0
+
+    def render(self, screen, left, top, tile):
+        x = left + self.x * tile
+        y = top + self.y * tile
+        pygame.draw.rect(screen, pygame.Color('black'), (x, y, tile, tile))
 
     def __str__(self):
         return self.directory
@@ -82,7 +88,7 @@ class Board:
     def __init__(self, width, height, left, top, tile_size):
         self.width = width
         self.height = height
-        self.board = [[0] * width for _ in range(height)]
+        self.board = [[None] * width for _ in range(height)]
         # значения по умолчанию
         self.left = left
         self.top = top
@@ -93,14 +99,6 @@ class Board:
         self.left = left
         self.top = top
         self.cell_size = cell_size
-
-    def render(self, screen):
-        color = pygame.Color('white')
-        for row in range(self.height):
-            y = self.top + row * self.cell_size
-            for col in range(self.width):
-                x = self.left + col * self.cell_size
-                pygame.draw.rect(screen, color, (x, y, self.cell_size, self.cell_size), width=1)
 
     def get_cell(self, mouse_pos):
         x, y = mouse_pos
@@ -116,15 +114,18 @@ class GameBoard(Board):
     def __init__(self, width, height, left, top, tile_size):
         super().__init__(width, height, left, top, tile_size)
 
-    def on_click(self, cell):
-        pass
+    def render(self, screen):
+        for row in self.board:
+            for unit in row:
+                if unit is not None:
+                    unit.render(screen, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
 
 
 class Shop(Board):
     def __init__(self, width, height, left, top, tile_size, units):
         super().__init__(width, height, left, top, tile_size)
         self.units = [*units]
-        self.board[0] = [unit for unit in units] + [0, 0, 0]
+        self.board[0] = [unit for unit in units] + [None, None, None]
 
     def on_click(self, cell):
         pass
@@ -132,6 +133,12 @@ class Shop(Board):
     def get_unit(self, pos):
         x, y = pos
         return self.board[y][x]
+
+    def render(self, screen):
+        for row in self.board:
+            for unit in row:
+                if unit is not None:
+                    unit.render(screen, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP)
 
 
 class Bullet:
@@ -155,13 +162,15 @@ class Turret(BaseCharacter):
     def copy(self, pos):
         return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay)
 
+
 class Wall(BaseCharacter):
     def __init__(self, x, y, directory, health, cost):
         super().__init__(health, x, y, directory)
         self.cost = cost
 
     def copy(self, pos):
-        return Wall(pos[1], pos[0], self.directory, self.health, self.cost)
+        x, y = pos[1], pos[0]
+        return Wall(x, y, self.directory, self.health, self.cost)
 
 
 class Generator(BaseCharacter):
@@ -224,6 +233,7 @@ class Game:
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
                 self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
+                print(self.game_board.board)
 
         elif shop_cell:
             if not up:
@@ -245,11 +255,11 @@ def init_shop(settings: Settings):
     result.append(generator)
 
     wt = settings.WaterTurret()
-    watter_turret = Turret(0, 0, wt.directory, wt.cost, wt.health, wt.delay)
+    watter_turret = Turret(1, 0, wt.directory, wt.cost, wt.health, wt.delay)
     result.append(watter_turret)
 
     wll = settings.Wall()
-    wall = Wall(0, 0, wll.directory, wll.health, wll.cost)
+    wall = Wall(2, 0, wll.directory, wll.health, wll.cost)
     result.append(wall)
 
     return result
@@ -270,7 +280,7 @@ def main():
 
     units_for_shop = init_shop(settings)
 
-    game_board = Board(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
+    game_board = GameBoard(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
     shop = Shop(6, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP, units_for_shop)
     game = Game(game_board, shop, settings)
 
@@ -303,6 +313,7 @@ def main():
             screen.blit(cursor_image, mouse_coord)
 
         pygame.display.flip()
+
 
 if __name__ == '__main__':
     main()
