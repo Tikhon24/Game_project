@@ -309,6 +309,7 @@ def main():
             if event.type == pygame.MOUSEBUTTONUP:
                 game.get_click(event.pos, True)
             if event.type == pygame.MOUSEMOTION:
+                # добавить рамку в магазин
                 mouse_coord = event.pos
 
         if not game_paused:
