@@ -219,7 +219,7 @@ class Game:
             y, x = game_board_cell
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
-                self.game_board.board[y][x] = self.current_unit
+                self.game_board.board[y][x] = self.create_unit(self.current_unit)
 
         elif shop_cell:
             if not up:
