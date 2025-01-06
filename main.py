@@ -216,9 +216,6 @@ class Game:
         pass
 
     def get_click(self, mouse_pos, up):
-        if not up:
-            self.is_hold = False
-
         game_board_cell = self.game_board.get_cell(mouse_pos)
         shop_cell = self.shop.get_cell(mouse_pos)
 
