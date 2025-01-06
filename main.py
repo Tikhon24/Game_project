@@ -152,16 +152,16 @@ class Turret(BaseCharacter):
         self.delay = delay
         self.cost = cost
 
-    def copy(self):
-        return Turret(self.x, self.y, self.directory, self.cost, self.health, self.delay)
+    def copy(self, pos):
+        return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay)
 
 class Wall(BaseCharacter):
     def __init__(self, x, y, directory, health, cost):
         super().__init__(health, x, y, directory)
         self.cost = cost
 
-    def copy(self):
-        return Wall(self.x, self.y, self.directory, self.health, self.cost)
+    def copy(self, pos):
+        return Wall(pos[1], pos[0], self.directory, self.health, self.cost)
 
 
 class Generator(BaseCharacter):
@@ -171,8 +171,8 @@ class Generator(BaseCharacter):
         self.plus_cost = plus_cost
         self.cost = cost
 
-    def copy(self):
-        return Generator(self.x, self.y, self.directory, self.health, self.delay, self.plus_cost, self.cost)
+    def copy(self, pos):
+        return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost)
 
 
 class Enemy(BaseCharacter):
@@ -203,8 +203,7 @@ class Game:
         self.current_unit = None
 
     def create_unit(self, pos, unit):
-        x, y = pos
-        return unit.copy()
+        return unit.copy(pos)
 
     def render(self, screen):
         self.game_board.render(screen)
@@ -228,7 +227,6 @@ class Game:
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
                 self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
-                print(self.game_board.board)
 
         elif shop_cell:
             if not up:
@@ -276,8 +274,6 @@ def main():
     game_board = Board(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
     shop = Shop(6, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP, units_for_shop)
     game = Game(game_board, shop, settings)
-
-    print(shop.units)
 
     running = True
     game_paused = False
