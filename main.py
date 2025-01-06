@@ -233,14 +233,20 @@ class Game:
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
                 self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
-                print(self.game_board.board)
+                self.is_hold = False
+                self.current_unit = None
 
         elif shop_cell:
+            y, x = shop_cell
             if not up:
-                y, x = shop_cell
-                self.current_unit = self.shop.get_unit((x, y))
-                self.is_hold = True
-                # привязка спрайта к курсору
+                if self.current_unit is not self.shop.get_unit((x, y)):
+
+                    self.current_unit = self.shop.get_unit((x, y))
+                    self.is_hold = True
+                    # привязка спрайта к курсору
+                else:
+                    self.is_hold = False
+                    self.current_unit = None
 
         else:
             self.is_hold = False
