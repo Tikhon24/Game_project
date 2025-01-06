@@ -264,8 +264,10 @@ def main():
 
     screen = pygame.display.set_mode(SIZE)
     pygame.display.set_caption('АТЕ')
+    pygame.mouse.set_visible(False)
 
     background_image = load_image('background.png', DIR_DATA)
+    cursor_image = load_image("cursor.png", "data/cursor")
 
     settings = Settings()
 
@@ -293,12 +295,17 @@ def main():
                 game.get_click(event.pos, False)
             if event.type == pygame.MOUSEBUTTONUP:
                 game.get_click(event.pos, True)
+            if event.type == pygame.MOUSEMOTION:
+                mouse_coord = event.pos
 
         if not game_paused:
             screen.blit(background_image, (0, 0))
             game.render(screen)
-            pygame.display.flip()
 
+        if pygame.mouse.get_focused():
+            screen.blit(cursor_image, mouse_coord)
+
+        pygame.display.flip()
 
 if __name__ == '__main__':
     main()
