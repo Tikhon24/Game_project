@@ -96,6 +96,14 @@ class Settings:
             self.delay = 3000
             self.speed = 0.2
 
+    class Nail:
+        def __init__(self):
+            self.directory = 'nail'
+            self.health = 10
+            self.damage = 1
+            self.delay = 3000
+            self.speed = 0.2
+
 
 class Board:
     # создание поля
@@ -165,6 +173,12 @@ class Bullet:
 
     def set_bullet_speed(self, bullet_speed):
         self.bullet_speed = bullet_speed
+
+    def get_bullet_speed(self):
+        return self.bullet_speed
+
+    def get_bullet_damage(self):
+        return self.bullet_damage
 
 
 class Turret(BaseCharacter):
@@ -306,6 +320,7 @@ def main():
 
     running = True
     game_paused = False
+    clock = pygame.time.Clock()
     # игровой цикл
     while running:
         # обработка событий
@@ -333,6 +348,7 @@ def main():
         if pygame.mouse.get_focused():
             screen.blit(cursor_image, mouse_coord)
 
+        clock.tick(FPS)
         pygame.display.flip()
 
 
