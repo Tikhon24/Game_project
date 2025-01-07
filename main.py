@@ -44,10 +44,11 @@ class BaseCharacter:
     def set_position(self, position):
         self.x, self.y = position
 
-    def render(self, screen, left, top, tile):
+    def render(self, screen, left, top, tile, image):
+        directory = "data/backly"
         x = left + self.x * tile
         y = top + self.y * tile
-        pygame.draw.rect(screen, pygame.Color('black'), (x, y, tile, tile))
+        screen.blit(pygame.transform.scale(load_image(image, directory), (tile, tile)), (x, y))
 
     def __str__(self):
         return self.directory
@@ -140,7 +141,7 @@ class GameBoard(Board):
         for row in self.board:
             for unit in row:
                 if unit is not None:
-                    unit.render(screen, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
+                    unit.render(screen, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD, "backly.png")
 
 
 class Shop(Board):
@@ -160,7 +161,7 @@ class Shop(Board):
         for row in self.board:
             for unit in row:
                 if unit is not None:
-                    unit.render(screen, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP)
+                    unit.render(screen, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP, "backly.png")
 
 
 class Bullet:
