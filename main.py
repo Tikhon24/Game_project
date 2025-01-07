@@ -100,9 +100,9 @@ class Settings:
         def __init__(self):
             self.directory = 'nail'
             self.health = 10
-            self.damage = 1
-            self.delay = 3000
-            self.speed = 0.2
+            self.damage = 2
+            self.delay = 4000
+            self.speed = 0.1
 
 
 class Board:
