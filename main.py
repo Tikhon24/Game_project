@@ -1,6 +1,7 @@
 import pygame
 import os
 import sys
+import random
 
 SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
@@ -60,6 +61,29 @@ class Settings:
     def __init__(self):
         self.start_money = 100
         self.hp = 20
+        self.wave_delay = 120000
+        self.enemies_for_waves = {
+            1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+            2: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
+            3: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
+            4: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2],
+            5: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2],
+            6: [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2],
+            7: [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2],
+            8: [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2],
+            9: [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2],
+            10: [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2],
+            11: [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2],
+            12: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
+            13: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
+            14: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
+            15: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
+            16: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
+            17: [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+            18: [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+            19: [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
+            20: [1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2]
+        }
 
     class WaterTurret:
         def __init__(self):
@@ -67,12 +91,22 @@ class Settings:
             self.health = 5
             self.delay = 5000
             self.cost = 100
+            self.frames = {
+                'atack': [],
+                'motion': [],
+                'die': [],
+                'stop': ''
+            }
 
     class WaterBullet:
         def __init__(self):
             self.directory = 'bucket_bullet'
             self.speed = 4
             self.damage = 1
+            self.frames = {
+                'motion': [],
+                'stop': ''
+            }
 
     class Generator:
         def __init__(self):
@@ -81,12 +115,21 @@ class Settings:
             self.delay = 10000
             self.cost = 50
             self.plus_cost = 25
+            self.frames = {
+                'atack': [],
+                'motion': [],
+                'die': [],
+                'stop': ''
+            }
 
     class Wall:
         def __init__(self):
             self.directory = 'wall'
             self.health = 8
             self.cost = 50
+            self.frames = {
+                'stop': ''
+            }
 
     class Dino:
         def __init__(self):
@@ -95,6 +138,13 @@ class Settings:
             self.damage = 1
             self.delay = 3000
             self.speed = 0.2
+            self.frames = {
+                'atack': [],
+                'motion': [],
+                'die': [],
+                'finish': [],
+                'stop': load_image('Dino0.png', 'data/dino')
+            }
 
     class Nail:
         def __init__(self):
@@ -103,6 +153,13 @@ class Settings:
             self.damage = 2
             self.delay = 4000
             self.speed = 0.1
+            self.frames = {
+                'atack': [],
+                'motion': [],
+                'die': [],
+                'finish': [],
+                'stop': ''
+            }
 
 
 class Board:
@@ -170,12 +227,13 @@ class Shop(Board):
 
 
 class Bullet:
-    def __init__(self, x, y, directory, bullet_speed, bullet_damage):
+    def __init__(self, x, y, directory, bullet_speed, bullet_damage, frames):
         self.bullet_damage = bullet_damage
         self.bullet_speed = bullet_speed
         self.x = x
         self.y = y
         self.directory = directory
+        self.frames = frames
 
     def set_bullet_damage(self, bullet_damage):
         self.bullet_damage = bullet_damage
@@ -208,16 +266,17 @@ class Bullet:
 
 
 class Turret(BaseCharacter):
-    def __init__(self, x, y, directory, cost, health, delay, bullet):
+    def __init__(self, x, y, directory, cost, health, delay, bullet, frames):
         super().__init__(health, x, y, directory)
         self.delay = delay
         self.cost = cost
         self.bullet = bullet
         self.last_update_time = pygame.time.get_ticks()
         self.bullets = []
+        self.frames = frames
 
     def copy(self, pos):
-        return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet)
+        return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
 
     def update(self, screen):
         if self.bullets:
@@ -232,51 +291,131 @@ class Turret(BaseCharacter):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update_time >= self.delay:
             bullet = Settings.WaterBullet()
-            self.bullets.append(self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage))
+            self.bullets.append(
+                self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames))
             self.last_update_time = current_time
 
 
 class Wall(BaseCharacter):
-    def __init__(self, x, y, directory, health, cost):
+    def __init__(self, x, y, directory, health, cost, frames):
         super().__init__(health, x, y, directory)
         self.cost = cost
+        self.frames = frames
 
     def copy(self, pos):
         x, y = pos[1], pos[0]
-        return Wall(x, y, self.directory, self.health, self.cost)
+        return Wall(x, y, self.directory, self.health, self.cost, self.frames)
 
     def update(self, screen):
         pass
 
 
 class Generator(BaseCharacter):
-    def __init__(self, x, y, directory, health, delay, plus_cost, cost):
+    def __init__(self, x, y, directory, health, delay, plus_cost, cost, frames):
         super().__init__(health, x, y, directory)
         self.delay = delay
         self.plus_cost = plus_cost
         self.cost = cost
+        self.frames = frames
 
     def copy(self, pos):
-        return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost)
+        return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost,
+                         self.frames)
 
     def update(self, screen):
         pass
 
 
 class Enemy(BaseCharacter):
-    def __init__(self, x, y, directory, health=5, enemy_speed=0.2, damage=1, delay=3000):
+    def __init__(self, x, y, directory, health, enemy_speed, damage, delay, frames):
         super().__init__(health, x, y, directory)
         self.damage = damage
         self.enemy_speed = enemy_speed
         self.delay = delay
+        self.frames = frames
 
 
 class Wave:
-    pass
+    def __init__(self, wave_counter, delay, enemy_matrix):
+        self.counter = wave_counter
+        self.delay = delay
+        self.enemy_matrix = enemy_matrix
+        self.current_enemies = []
+        self.id = 0
+        self.last_update = pygame.time.get_ticks()
+
+    def start_wave(self):
+        pass
+
+    def finish_wave(self):
+        pass
+
+    def update(self):
+        pass
+
+    def render(self, screen):
+        pass
 
 
 class Spawn:
-    pass
+    def __init__(self, wave_counter, delay, enemies):
+        self.wave_counter = wave_counter
+        self.delay = delay
+        self.last_update = pygame.time.get_ticks()
+        self.start_game()
+        self.enemies = enemies
+        self.waves_dict = {i: self.generate_wave_matrix(i, enemies[i - 1]) for i in range(1, 21)}
+
+    def get_wave_counter(self):
+        return self.wave_counter
+
+    def set_wave_counter(self, wave_counter):
+        self.wave_counter = wave_counter
+
+    def start_game(self):
+        self.wave = Wave(0, 10000)
+
+    def update(self, screen):
+        # ведение волны
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_update >= self.delay:
+            self.set_wave_counter(self.get_wave_counter() + 1)
+            self.wave.finish_wave()
+            enemy_matrix = self.waves_dict[self.get_wave_counter() + 1]
+            self.wave = Wave(self.get_wave_counter(), 10000, enemy_matrix)
+
+        if self.wave_counter != 0:
+            self.wave.update()
+
+    def render(self, screen):
+        pass
+
+    def generate_wave_matrix(self, level, enemies):
+        """Генерирует матрицу для заданной волны"""
+        rows, cols = 5, 12
+        matrix = [[0 for _ in range(cols)] for _ in range(rows)]
+        num_enemies = level * 3
+
+        # Заполняем каждый столбец хотя бы одним врагом
+        for col in range(cols):
+            row = random.randint(0, rows - 1)
+            enemy_type = random.choice(enemies) if level > 1 else 1
+            matrix[row][col] = enemy_type
+
+        # Заполняем оставшиеся враги
+        remaining_enemies = num_enemies - cols
+
+        for _ in range(remaining_enemies):
+            while True:
+                row = random.randint(0, rows - 1)
+                col = random.randint(0, cols - 1)
+                if matrix[row][col] == 0:  # Если клетка пустая
+                    # Случайно выбираем тип врага
+                    enemy_type = random.choice(enemies) if level > 1 else 1
+                    matrix[row][col] = enemy_type
+                    break
+
+        return matrix
 
 
 class Game:
@@ -285,17 +424,19 @@ class Game:
         self.shop = shop
         self.settings = settings
         self.total_money = settings.start_money
+        self.wave_delay = settings.wave_delay
+        self.enemies_for_spawn = settings.enemies_for_waves
         self.hp = settings.hp
         self.wave_counter = 0
         self.is_hold = False
         self.current_unit = None
+        self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
 
     def create_unit(self, pos, unit):
         return unit.copy(pos)
 
     def render(self, screen):
         self.game_board.render(screen)
-        # self.shop.render(screen)
 
     def is_win(self):
         pass
@@ -339,15 +480,15 @@ def init_shop(settings: Settings):
     result = []
 
     gen = settings.Generator()
-    generator = Generator(0, 0, gen.directory, gen.health, gen.delay, gen.plus_cost, gen.cost)
+    generator = Generator(0, 0, gen.directory, gen.health, gen.delay, gen.plus_cost, gen.cost, gen.frames)
     result.append(generator)
 
     wt = settings.WaterTurret()
-    watter_turret = Turret(1, 0, wt.directory, wt.cost, wt.health, wt.delay, Bullet)
+    watter_turret = Turret(1, 0, wt.directory, wt.cost, wt.health, wt.delay, Bullet, wt.frames)
     result.append(watter_turret)
 
     wll = settings.Wall()
-    wall = Wall(2, 0, wll.directory, wll.health, wll.cost)
+    wall = Wall(2, 0, wll.directory, wll.health, wll.cost, wll.frames)
     result.append(wall)
 
     return result
