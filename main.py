@@ -364,7 +364,7 @@ class Spawn:
         self.last_update = pygame.time.get_ticks()
         self.start_game()
         self.enemies = enemies
-        self.waves_dict = {i: self.generate_wave_matrix(i, enemies[i - 1]) for i in range(1, 21)}
+        self.waves_dict = {i: self.generate_wave_matrix(i, enemies[i]) for i in range(1, 21)}
 
     def get_wave_counter(self):
         return self.wave_counter
@@ -373,7 +373,7 @@ class Spawn:
         self.wave_counter = wave_counter
 
     def start_game(self):
-        self.wave = Wave(0, 10000)
+        self.wave = Wave(0, 10000, None)
 
     def update(self, screen):
         # ведение волны
