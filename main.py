@@ -71,7 +71,7 @@ class Settings:
     class WaterBullet:
         def __init__(self):
             self.directory = 'bucket_bullet'
-            self.speed = 1
+            self.speed = 4
             self.damage = 1
 
     class Generator:
@@ -142,6 +142,12 @@ class GameBoard(Board):
                 if unit is not None:
                     unit.render(screen, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
 
+    def update(self, screen):
+        for row in self.board:
+            for unit in row:
+                if unit is not None:
+                    unit.update(screen)
+
 
 class Shop(Board):
     def __init__(self, width, height, left, top, tile_size, units):
@@ -164,9 +170,12 @@ class Shop(Board):
 
 
 class Bullet:
-    def __init__(self, bullet_speed=1, bullet_damage=1):
+    def __init__(self, x, y, directory, bullet_speed, bullet_damage):
         self.bullet_damage = bullet_damage
         self.bullet_speed = bullet_speed
+        self.x = x
+        self.y = y
+        self.directory = directory
 
     def set_bullet_damage(self, bullet_damage):
         self.bullet_damage = bullet_damage
@@ -180,15 +189,51 @@ class Bullet:
     def get_bullet_damage(self):
         return self.bullet_damage
 
+    def get_position(self):
+        return self.x, self.y
+
+    def set_position(self, position):
+        self.x, self.y = position
+
+    def render(self, screen):
+        x, y = self.get_position()
+        x = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD
+        y = TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
+        pygame.draw.rect(screen, pygame.Color('white'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+
+    def update(self):
+        x, y = self.get_position()
+        x += self.bullet_speed / FPS
+        self.set_position(position=(x, y))
+
 
 class Turret(BaseCharacter):
-    def __init__(self, x, y, directory, cost, health, delay):
+    def __init__(self, x, y, directory, cost, health, delay, bullet):
         super().__init__(health, x, y, directory)
         self.delay = delay
         self.cost = cost
+        self.bullet = bullet
+        self.last_update_time = pygame.time.get_ticks()
+        self.bullets = []
 
     def copy(self, pos):
-        return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay)
+        return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet)
+
+    def update(self, screen):
+        if self.bullets:
+            for bullet in self.bullets:
+                bullet.update()
+                if bullet.get_position()[0] * TILE_SIZE_BOARD + LEFT_GAME_BOARD >= WIDTH:
+                    try:
+                        self.bullets.remove(bullet)
+                    except ValueError as ve:
+                        print(ve)
+                bullet.render(screen)
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_update_time >= self.delay:
+            bullet = Settings.WaterBullet()
+            self.bullets.append(self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage))
+            self.last_update_time = current_time
 
 
 class Wall(BaseCharacter):
@@ -200,6 +245,9 @@ class Wall(BaseCharacter):
         x, y = pos[1], pos[0]
         return Wall(x, y, self.directory, self.health, self.cost)
 
+    def update(self, screen):
+        pass
+
 
 class Generator(BaseCharacter):
     def __init__(self, x, y, directory, health, delay, plus_cost, cost):
@@ -210,6 +258,9 @@ class Generator(BaseCharacter):
 
     def copy(self, pos):
         return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost)
+
+    def update(self, screen):
+        pass
 
 
 class Enemy(BaseCharacter):
@@ -244,7 +295,7 @@ class Game:
 
     def render(self, screen):
         self.game_board.render(screen)
-        self.shop.render(screen)
+        # self.shop.render(screen)
 
     def is_win(self):
         pass
@@ -280,6 +331,9 @@ class Game:
             self.is_hold = False
             self.current_unit = None
 
+    def update(self, screen):
+        self.game_board.update(screen)
+
 
 def init_shop(settings: Settings):
     result = []
@@ -289,7 +343,7 @@ def init_shop(settings: Settings):
     result.append(generator)
 
     wt = settings.WaterTurret()
-    watter_turret = Turret(1, 0, wt.directory, wt.cost, wt.health, wt.delay)
+    watter_turret = Turret(1, 0, wt.directory, wt.cost, wt.health, wt.delay, Bullet)
     result.append(watter_turret)
 
     wll = settings.Wall()
@@ -343,6 +397,7 @@ def main():
 
         if not game_paused:
             screen.blit(background_image, (0, 0))
+            game.update(screen)
             game.render(screen)
 
         if pygame.mouse.get_focused():
