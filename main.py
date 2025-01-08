@@ -52,11 +52,10 @@ class BaseCharacter:
     def set_position(self, position):
         self.x, self.y = position
 
-    def render(self, screen, left, top, tile, image):
-        directory = "data/backly"
+    def render(self, screen, left, top, tile):
         x = left + self.x * tile
         y = top + self.y * tile
-        screen.blit(pygame.transform.scale(load_image(image, directory), (tile, tile)), (x, y))
+        pygame.draw.rect(screen, pygame.Color('black'), (x, y, tile, tile))
 
     def __str__(self):
         return self.directory
@@ -205,13 +204,18 @@ class GameBoard(Board):
         for row in self.board:
             for unit in row:
                 if unit is not None:
-                    unit.render(screen, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD, "backly.png")
+                    unit.render(screen, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
 
     def update(self, screen):
+        count = 0
         for row in self.board:
             for unit in row:
                 if unit is not None:
-                    unit.update(screen)
+                    if isinstance(unit, Generator):
+                        count += unit.update(screen)
+                    else:
+                        unit.update(screen)
+        return count
 
 
 class Shop(Board):
@@ -324,6 +328,7 @@ class Generator(BaseCharacter):
         self.delay = delay
         self.plus_cost = plus_cost
         self.cost = cost
+        self.last_update_time = pygame.time.get_ticks()
         self.frames = frames
 
     def copy(self, pos):
@@ -331,7 +336,11 @@ class Generator(BaseCharacter):
                          self.frames)
 
     def update(self, screen):
-        pass
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_update_time >= self.delay:
+            self.last_update_time = current_time
+            return self.plus_cost
+        return 0
 
 
 class Enemy(BaseCharacter):
@@ -446,6 +455,7 @@ class Game:
     def render(self, screen):
         self.game_board.render(screen)
         render_text(screen, self.total_money, 36, (425, 80))
+        render_text(screen, self.hp, 48, (95, 15))
 
     def is_win(self):
         pass
@@ -461,7 +471,9 @@ class Game:
             y, x = game_board_cell
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
-                self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
+                if self.current_unit.cost <= self.total_money:
+                    self.total_money -= self.current_unit.cost
+                    self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
                 self.is_hold = False
                 self.current_unit = None
 
@@ -482,7 +494,8 @@ class Game:
             self.current_unit = None
 
     def update(self, screen):
-        self.game_board.update(screen)
+        self.total_money += self.game_board.update(screen)
+
 
 
 def init_shop(settings: Settings):
