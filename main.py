@@ -3,6 +3,7 @@ import os
 import sys
 import random
 
+FONT = "data/font/yellwa.ttf"
 SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
 TILE_SIZE_BOARD = 150
@@ -24,6 +25,12 @@ def load_image(name, directory, colorkey=None):
         sys.exit()
     image = pygame.image.load(fullname)
     return image
+
+
+def render_text(screen, text, font_size, coords):
+    font = pygame.font.Font(FONT, font_size)
+    text_surface = font.render(str(text), True, pygame.Color(0, 130, 149))
+    screen.blit(text_surface, coords)
 
 
 class BaseCharacter:
@@ -438,6 +445,7 @@ class Game:
 
     def render(self, screen):
         self.game_board.render(screen)
+        render_text(screen, self.total_money, 36, (425, 80))
 
     def is_win(self):
         pass
@@ -542,8 +550,10 @@ def main():
             game.update(screen)
             game.render(screen)
 
+
         if pygame.mouse.get_focused():
             screen.blit(cursor_image, mouse_coord)
+
 
         clock.tick(FPS)
         pygame.display.flip()
