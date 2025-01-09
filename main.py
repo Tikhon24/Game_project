@@ -334,6 +334,17 @@ class Enemy(BaseCharacter):
         self.delay = delay
         self.frames = frames
 
+    def render(self, screen):
+        x, y = self.get_position()
+        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
+        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
+        pygame.draw.rect(screen, pygame.Color('blue'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+
+    def update(self):
+        x, y = self.get_position()
+        x -= self.enemy_speed / FPS
+        self.set_position(position=(x, y))
+
 
 class Wave:
     def __init__(self, wave_counter, delay, enemy_matrix):
@@ -343,6 +354,13 @@ class Wave:
         self.current_enemies = []
         self.id = 0
         self.last_update = pygame.time.get_ticks()
+        self.relations_enemies = {
+            0: None,
+            1: Settings.Dino,
+            2: Settings.Nail
+        }
+        self.count_of_spawn = 0
+        self.new_enemies = []
 
     def start_wave(self):
         pass
@@ -350,21 +368,51 @@ class Wave:
     def finish_wave(self):
         pass
 
+    def create_enemy(self, enemy_type, pos):
+        params = enemy_type()
+        x, y = pos
+        enemy = Enemy(x, y, params.directory, params.health, params.speed, params.damage, params.delay, params.frames)
+        self.current_enemies.append(enemy)
+        self.new_enemies.append(enemy)
+
     def update(self):
-        pass
+        result = []
+
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_update >= self.delay:
+            if self.enemy_matrix:
+                self.count_of_spawn += 1
+                enemies_to_spawn = [row[self.count_of_spawn - 1] for row in self.enemy_matrix]
+                x = 10
+                for y, id in enumerate(enemies_to_spawn):
+                    match id:
+                        case 0:
+                            pass
+                        case _:
+                            self.create_enemy(self.relations_enemies[id], pos=(x, y))
+                for enemy in self.new_enemies:
+                    result.append(enemy)
+            self.last_update = current_time
+        for enemy in self.current_enemies:
+            enemy.update()
+        if result:
+            return result
+        return None
 
     def render(self, screen):
-        pass
+        for enemy in self.current_enemies:
+            enemy.render(screen)
 
 
 class Spawn:
     def __init__(self, wave_counter, delay, enemies):
         self.wave_counter = wave_counter
+        self.waves_dict = {i: self.generate_wave_matrix(i, enemies[i]) for i in range(1, 21)}
         self.delay = delay
         self.last_update = pygame.time.get_ticks()
-        self.start_game()
         self.enemies = enemies
-        self.waves_dict = {i: self.generate_wave_matrix(i, enemies[i]) for i in range(1, 21)}
+        self.current_enemies = []
+        self.wave = Wave(self.wave_counter, 10000, None)
 
     def get_wave_counter(self):
         return self.wave_counter
@@ -372,23 +420,23 @@ class Spawn:
     def set_wave_counter(self, wave_counter):
         self.wave_counter = wave_counter
 
-    def start_game(self):
-        self.wave = Wave(0, 10000, None)
-
     def update(self, screen):
         # ведение волны
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update >= self.delay:
             self.set_wave_counter(self.get_wave_counter() + 1)
             self.wave.finish_wave()
-            enemy_matrix = self.waves_dict[self.get_wave_counter() + 1]
+            enemy_matrix = self.waves_dict[self.get_wave_counter()]
             self.wave = Wave(self.get_wave_counter(), 10000, enemy_matrix)
+            self.last_update = current_time
 
         if self.wave_counter != 0:
-            self.wave.update()
+            new_enemies = self.wave.update()
+            if new_enemies:
+                self.current_enemies.append(new_enemies)
 
     def render(self, screen):
-        pass
+        self.wave.render(screen)
 
     def generate_wave_matrix(self, level, enemies):
         """Генерирует матрицу для заданной волны"""
@@ -437,6 +485,7 @@ class Game:
 
     def render(self, screen):
         self.game_board.render(screen)
+        self.spawn.render(screen)
 
     def is_win(self):
         pass
@@ -473,6 +522,7 @@ class Game:
             self.current_unit = None
 
     def update(self, screen):
+        self.spawn.update(screen)
         self.game_board.update(screen)
 
 
