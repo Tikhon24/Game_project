@@ -3,6 +3,7 @@ import os
 import sys
 import random
 
+FONT = "data/font/yellwa.ttf"
 SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
 TILE_SIZE_BOARD = 150
@@ -24,6 +25,12 @@ def load_image(name, directory, colorkey=None):
         sys.exit()
     image = pygame.image.load(fullname)
     return image
+
+
+def render_text(screen, text, font_size, coords):
+    font = pygame.font.Font(FONT, font_size)
+    text_surface = font.render(str(text), True, pygame.Color(0, 130, 149))
+    screen.blit(text_surface, coords)
 
 
 class BaseCharacter:
@@ -200,10 +207,15 @@ class GameBoard(Board):
                     unit.render(screen, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
 
     def update(self, screen):
+        count = 0
         for row in self.board:
             for unit in row:
                 if unit is not None:
-                    unit.update(screen)
+                    if isinstance(unit, Generator):
+                        count += unit.update(screen)
+                    else:
+                        unit.update(screen)
+        return count
 
 
 class Shop(Board):
@@ -316,6 +328,7 @@ class Generator(BaseCharacter):
         self.delay = delay
         self.plus_cost = plus_cost
         self.cost = cost
+        self.last_update_time = pygame.time.get_ticks()
         self.frames = frames
 
     def copy(self, pos):
@@ -323,7 +336,11 @@ class Generator(BaseCharacter):
                          self.frames)
 
     def update(self, screen):
-        pass
+        current_time = pygame.time.get_ticks()
+        if current_time - self.last_update_time >= self.delay:
+            self.last_update_time = current_time
+            return self.plus_cost
+        return 0
 
 
 class Enemy(BaseCharacter):
@@ -486,6 +503,8 @@ class Game:
     def render(self, screen):
         self.game_board.render(screen)
         self.spawn.render(screen)
+        render_text(screen, self.total_money, 36, (425, 80))
+        render_text(screen, self.hp, 48, (95, 15))
 
     def is_win(self):
         pass
@@ -501,7 +520,9 @@ class Game:
             y, x = game_board_cell
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
-                self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
+                if self.current_unit.cost <= self.total_money:
+                    self.total_money -= self.current_unit.cost
+                    self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
                 self.is_hold = False
                 self.current_unit = None
 
@@ -523,7 +544,7 @@ class Game:
 
     def update(self, screen):
         self.spawn.update(screen)
-        self.game_board.update(screen)
+        self.total_money += self.game_board.update(screen)
 
 
 def init_shop(settings: Settings):
