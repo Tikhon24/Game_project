@@ -428,6 +428,7 @@ class Wave:
                             self.create_enemy(self.relations_enemies[id], pos=(x, y))
                 for enemy in self.new_enemies:
                     result.append(enemy)
+                self.new_enemies.clear()
             self.last_update = current_time
         if result:
             return result
@@ -469,6 +470,7 @@ class Spawn:
             if new_enemies:
                 for enemy in new_enemies:
                     self.current_enemies.append(enemy)
+                new_enemies.clear()
 
         if self.current_enemies:
             for enemy in self.current_enemies:

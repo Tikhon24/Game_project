@@ -52,10 +52,11 @@ class BaseCharacter:
     def set_position(self, position):
         self.x, self.y = position
 
-    def render(self, screen, left, top, tile):
-        x = left + self.x * tile
-        y = top + self.y * tile
-        pygame.draw.rect(screen, pygame.Color('black'), (x, y, tile, tile))
+    def render(self, screen):
+        x, y = self.get_position()
+        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
+        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
+        pygame.draw.rect(screen, pygame.Color('black'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
 
     def __str__(self):
         return self.directory
@@ -65,6 +66,8 @@ class BaseCharacter:
 
 
 class Settings:
+    """Игровые настройки"""
+
     def __init__(self):
         self.start_money = 100
         self.hp = 20
@@ -204,17 +207,23 @@ class GameBoard(Board):
         for row in self.board:
             for unit in row:
                 if unit is not None:
-                    unit.render(screen, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
+                    unit.render(screen)
 
-    def update(self, screen):
+    def render_bullets(self, screen):
+        for row in self.board:
+            for unit in row:
+                if unit is not None and isinstance(unit, Turret):
+                    unit.render_bullets(screen)
+
+    def update(self):
         count = 0
         for row in self.board:
             for unit in row:
                 if unit is not None:
                     if isinstance(unit, Generator):
-                        count += unit.update(screen)
+                        count += unit.update()
                     else:
-                        unit.update(screen)
+                        unit.update()
         return count
 
 
@@ -267,8 +276,8 @@ class Bullet:
 
     def render(self, screen):
         x, y = self.get_position()
-        x = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD
-        y = TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
+        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
+        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
         pygame.draw.rect(screen, pygame.Color('white'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
 
     def update(self):
@@ -290,7 +299,7 @@ class Turret(BaseCharacter):
     def copy(self, pos):
         return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
 
-    def update(self, screen):
+    def update(self):
         if self.bullets:
             for bullet in self.bullets:
                 bullet.update()
@@ -299,13 +308,23 @@ class Turret(BaseCharacter):
                         self.bullets.remove(bullet)
                     except ValueError as ve:
                         print(ve)
-                bullet.render(screen)
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update_time >= self.delay:
             bullet = Settings.WaterBullet()
             self.bullets.append(
                 self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames))
             self.last_update_time = current_time
+
+    def render(self, screen):
+        x, y = self.get_position()
+        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
+        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
+        pygame.draw.rect(screen, pygame.Color('black'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+
+    def render_bullets(self, screen):
+        if self.bullets:
+            for bullet in self.bullets:
+                bullet.render(screen)
 
 
 class Wall(BaseCharacter):
@@ -318,7 +337,7 @@ class Wall(BaseCharacter):
         x, y = pos[1], pos[0]
         return Wall(x, y, self.directory, self.health, self.cost, self.frames)
 
-    def update(self, screen):
+    def update(self):
         pass
 
 
@@ -335,7 +354,7 @@ class Generator(BaseCharacter):
         return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost,
                          self.frames)
 
-    def update(self, screen):
+    def update(self):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update_time >= self.delay:
             self.last_update_time = current_time
@@ -409,9 +428,8 @@ class Wave:
                             self.create_enemy(self.relations_enemies[id], pos=(x, y))
                 for enemy in self.new_enemies:
                     result.append(enemy)
+                self.new_enemies.clear()
             self.last_update = current_time
-        for enemy in self.current_enemies:
-            enemy.update()
         if result:
             return result
         return None
@@ -437,7 +455,7 @@ class Spawn:
     def set_wave_counter(self, wave_counter):
         self.wave_counter = wave_counter
 
-    def update(self, screen):
+    def update(self):
         # ведение волны
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update >= self.delay:
@@ -450,10 +468,18 @@ class Spawn:
         if self.wave_counter != 0:
             new_enemies = self.wave.update()
             if new_enemies:
-                self.current_enemies.append(new_enemies)
+                for enemy in new_enemies:
+                    self.current_enemies.append(enemy)
+                new_enemies.clear()
+
+        if self.current_enemies:
+            for enemy in self.current_enemies:
+                enemy.update()
 
     def render(self, screen):
-        self.wave.render(screen)
+        if self.current_enemies:
+            for enemy in self.current_enemies:
+                enemy.render(screen)
 
     def generate_wave_matrix(self, level, enemies):
         """Генерирует матрицу для заданной волны"""
@@ -503,6 +529,7 @@ class Game:
     def render(self, screen):
         self.game_board.render(screen)
         self.spawn.render(screen)
+        self.game_board.render_bullets(screen)
         render_text(screen, self.total_money, 36, (425, 80))
         render_text(screen, self.hp, 48, (95, 15))
 
@@ -542,9 +569,9 @@ class Game:
             self.is_hold = False
             self.current_unit = None
 
-    def update(self, screen):
-        self.spawn.update(screen)
-        self.total_money += self.game_board.update(screen)
+    def update(self):
+        self.spawn.update()
+        self.total_money += self.game_board.update()
 
 
 def init_shop(settings: Settings):
@@ -609,7 +636,7 @@ def main():
 
         if not game_paused:
             screen.blit(background_image, (0, 0))
-            game.update(screen)
+            game.update()
             game.render(screen)
 
         if pygame.mouse.get_focused():
