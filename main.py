@@ -33,6 +33,11 @@ def render_text(screen, text, font_size, coords):
     screen.blit(text_surface, coords)
 
 
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
 class BaseCharacter:
     def __init__(self, health, x, y, directory):
         self.health = health
@@ -599,6 +604,7 @@ def main():
     screen = pygame.display.set_mode(SIZE)
     pygame.display.set_caption('АТЕ')
     pygame.mouse.set_visible(False)
+    clock = pygame.time.Clock()
 
     background_image = load_image('background.png', DIR_DATA)
     cursor_image = load_image("cursor.png", "data/cursor")
@@ -613,14 +619,14 @@ def main():
 
     running = True
     game_paused = False
-    clock = pygame.time.Clock()
+
+    mouse_coord = (0, 0)
     # игровой цикл
     while running:
         # обработка событий
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
-                continue
+                terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
