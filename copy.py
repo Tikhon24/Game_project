@@ -3,6 +3,7 @@ import os
 import sys
 import random
 
+# -=----------------------------------=-
 FONT = "data/font/yellwa.ttf"
 SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
@@ -15,6 +16,13 @@ TOP_GAME_BOARD = 251
 LEFT_SHOP = 845
 TOP_SHOP = 37
 FPS = 30
+# -=----------------------------------=-
+all_bullets = pygame.sprite.Group()
+all_enemies = pygame.sprite.Group()
+all_units = pygame.sprite.Group()
+
+
+# -=----------------------------------=-
 
 
 def load_image(name, directory, colorkey=None):
@@ -33,12 +41,18 @@ def render_text(screen, text, font_size, coords):
     screen.blit(text_surface, coords)
 
 
-class BaseCharacter:
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+
+class BaseCharacter(pygame.sprite.Sprite):
     def __init__(self, health, x, y, directory):
         self.health = health
         self.x = x
         self.y = y
         self.directory = directory
+        self.image = load_image("dino0.png", "data/dino")
 
     def change_health(self, damage):
         self.health -= self.health - damage
@@ -56,7 +70,11 @@ class BaseCharacter:
         x, y = self.get_position()
         x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
         y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        pygame.draw.rect(screen, pygame.Color('black'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+        screen.blit(pygame.transform.scale(self.image, (TILE_SIZE_BOARD, TILE_SIZE_BOARD)), (x, y))
+
+    def kill(self):
+        self.health = 0
+        del self
 
     def __str__(self):
         return self.directory
@@ -315,12 +333,6 @@ class Turret(BaseCharacter):
                 self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames))
             self.last_update_time = current_time
 
-    def render(self, screen):
-        x, y = self.get_position()
-        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
-        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        pygame.draw.rect(screen, pygame.Color('black'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-
     def render_bullets(self, screen):
         if self.bullets:
             for bullet in self.bullets:
@@ -369,14 +381,25 @@ class Enemy(BaseCharacter):
         self.enemy_speed = enemy_speed
         self.delay = delay
         self.frames = frames
-
-    def render(self, screen):
-        x, y = self.get_position()
-        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
-        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        pygame.draw.rect(screen, pygame.Color('blue'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+        self.last_update = pygame.time.get_ticks()
 
     def update(self):
+        current_time = pygame.time.get_ticks()
+        # коллизия врагов и пуль
+        for bullet in all_bullets:
+            enemy_mask = pygame.mask.from_surface(self.image)
+            bullet_mask = pygame.mask.from_surface(bullet.image)
+            if pygame.sprite.collide_mask(enemy_mask, bullet_mask):
+                damage = bullet.get_bullet_damage()
+                self.change_health(damage)
+                # удаление объектов, если они больше не являются частью игры
+                if not self.is_alive():
+                    all_enemies.remove(self)
+                    self.kill()
+                all_bullets.remove(bullet)
+        # коллизия врагов и юнитов(нужно добавить)
+        if current_time - self.last_update >= self.delay:
+            self.last_update = current_time
         x, y = self.get_position()
         x -= self.enemy_speed / FPS
         self.set_position(position=(x, y))
@@ -599,6 +622,7 @@ def main():
     screen = pygame.display.set_mode(SIZE)
     pygame.display.set_caption('АТЕ')
     pygame.mouse.set_visible(False)
+    clock = pygame.time.Clock()
 
     background_image = load_image('background.png', DIR_DATA)
     cursor_image = load_image("cursor.png", "data/cursor")
@@ -613,14 +637,14 @@ def main():
 
     running = True
     game_paused = False
-    clock = pygame.time.Clock()
+
+    mouse_coord = (0, 0)
     # игровой цикл
     while running:
         # обработка событий
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
-                continue
+                terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False

@@ -20,8 +20,9 @@ FPS = 30
 all_bullets = pygame.sprite.Group()
 all_enemies = pygame.sprite.Group()
 all_units = pygame.sprite.Group()
-# -=----------------------------------=-
 
+
+# -=----------------------------------=-
 
 
 def load_image(name, directory, colorkey=None):
@@ -70,6 +71,10 @@ class BaseCharacter(pygame.sprite.Sprite):
         x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
         y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
         screen.blit(pygame.transform.scale(self.image, (TILE_SIZE_BOARD, TILE_SIZE_BOARD)), (x, y))
+
+    def kill(self):
+        self.health = 0
+        del self
 
     def __str__(self):
         return self.directory
@@ -380,11 +385,19 @@ class Enemy(BaseCharacter):
 
     def update(self):
         current_time = pygame.time.get_ticks()
+        # коллизия врагов и пуль
         for bullet in all_bullets:
-            self.mask = pygame.mask.from_surface(self.image)
+            enemy_mask = pygame.mask.from_surface(self.image)
             bullet_mask = pygame.mask.from_surface(bullet.image)
-            if pygame.sprite.collide_mask(self, bullet_mask):
-                pass
+            if pygame.sprite.collide_mask(enemy_mask, bullet_mask):
+                damage = bullet.get_bullet_damage()
+                self.change_health(damage)
+                # удаление объектов, если они больше не являются частью игры
+                if not self.is_alive():
+                    all_enemies.remove(self)
+                    self.kill()
+                all_bullets.remove(bullet)
+        # коллизия врагов и юнитов(нужно добавить)
         if current_time - self.last_update >= self.delay:
             self.last_update = current_time
         x, y = self.get_position()
