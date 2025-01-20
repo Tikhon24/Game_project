@@ -374,6 +374,7 @@ class Enemy(BaseCharacter):
         self.enemy_speed = enemy_speed
         self.delay = delay
         self.frames = frames
+        self.last_update = pygame.time.get_ticks()
 
     def render(self, screen):
         x, y = self.get_position()
@@ -382,6 +383,14 @@ class Enemy(BaseCharacter):
         pygame.draw.rect(screen, pygame.Color('blue'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
 
     def update(self):
+        current_time = pygame.time.get_ticks()
+        for bullet in all_bullets:
+            self.mask = pygame.mask.from_surface(self.image)
+            bullet_mask = pygame.mask.from_surface(bullet.image)
+            if pygame.sprite.collide_mask(self, bullet_mask):
+                pass
+        if current_time - self.last_update >= self.delay:
+            self.last_update = current_time
         x, y = self.get_position()
         x -= self.enemy_speed / FPS
         self.set_position(position=(x, y))
