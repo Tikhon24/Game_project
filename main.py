@@ -3,6 +3,7 @@ import os
 import sys
 import random
 
+# -=----------------------------------=-
 FONT = "data/font/yellwa.ttf"
 SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
@@ -15,6 +16,12 @@ TOP_GAME_BOARD = 251
 LEFT_SHOP = 845
 TOP_SHOP = 37
 FPS = 30
+# -=----------------------------------=-
+all_bullets = pygame.sprite.Group()
+all_enemies = pygame.sprite.Group()
+all_units = pygame.sprite.Group()
+# -=----------------------------------=-
+
 
 
 def load_image(name, directory, colorkey=None):
