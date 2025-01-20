@@ -45,12 +45,13 @@ def terminate():
     sys.exit()
 
 
-class BaseCharacter:
+class BaseCharacter(pygame.sprite.Sprite):
     def __init__(self, health, x, y, directory):
         self.health = health
         self.x = x
         self.y = y
         self.directory = directory
+        self.image = load_image("dino0.png", "data/dino")
 
     def change_health(self, damage):
         self.health -= self.health - damage
@@ -68,7 +69,7 @@ class BaseCharacter:
         x, y = self.get_position()
         x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
         y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        pygame.draw.rect(screen, pygame.Color('black'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+        screen.blit(pygame.transform.scale(self.image, (TILE_SIZE_BOARD, TILE_SIZE_BOARD)), (x, y))
 
     def __str__(self):
         return self.directory
@@ -327,12 +328,6 @@ class Turret(BaseCharacter):
                 self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames))
             self.last_update_time = current_time
 
-    def render(self, screen):
-        x, y = self.get_position()
-        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
-        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        pygame.draw.rect(screen, pygame.Color('black'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-
     def render_bullets(self, screen):
         if self.bullets:
             for bullet in self.bullets:
@@ -381,12 +376,6 @@ class Enemy(BaseCharacter):
         self.enemy_speed = enemy_speed
         self.delay = delay
         self.frames = frames
-
-    def render(self, screen):
-        x, y = self.get_position()
-        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
-        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        pygame.draw.rect(screen, pygame.Color('blue'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
 
     def update(self):
         x, y = self.get_position()
