@@ -9,7 +9,6 @@ SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
 TILE_SIZE_BOARD = 150
 TILE_SIZE_SHOP = 145
-DIR_SPAWN = 'spawn'
 DIR_DATA = 'data'
 LEFT_GAME_BOARD = 541
 TOP_GAME_BOARD = 251
@@ -48,11 +47,11 @@ def terminate():
 
 class BaseCharacter(pygame.sprite.Sprite):
     def __init__(self, health, x, y, directory):
+        super().__init__()
         self.health = health
         self.x = x
         self.y = y
         self.directory = directory
-        self.image = load_image("dino0.png", "data/dino")
 
     def change_health(self, damage):
         self.health -= self.health - damage
@@ -123,7 +122,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': ''
+                'stop': load_image("dino0.png", "data/dino")
             }
 
     class WaterBullet:
@@ -133,7 +132,7 @@ class Settings:
             self.damage = 1
             self.frames = {
                 'motion': [],
-                'stop': ''
+                'stop': load_image("dino2.png", "data/dino")
             }
 
     class Generator:
@@ -147,7 +146,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': ''
+                'stop': load_image("dino0.png", "data/dino")
             }
 
     class Wall:
@@ -156,7 +155,7 @@ class Settings:
             self.health = 8
             self.cost = 50
             self.frames = {
-                'stop': ''
+                'stop': load_image("dino0.png", "data/dino")
             }
 
     class Dino:
@@ -186,7 +185,7 @@ class Settings:
                 'motion': [],
                 'die': [],
                 'finish': [],
-                'stop': ''
+                'stop': load_image("dino0.png", "data/dino")
             }
 
 
@@ -265,14 +264,17 @@ class Shop(Board):
                     unit.render(screen, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP)
 
 
-class Bullet:
+class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, directory, bullet_speed, bullet_damage, frames):
+        super().__init__(all_bullets)
         self.bullet_damage = bullet_damage
         self.bullet_speed = bullet_speed
         self.x = x
         self.y = y
         self.directory = directory
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
 
     def set_bullet_damage(self, bullet_damage):
         self.bullet_damage = bullet_damage
@@ -296,7 +298,7 @@ class Bullet:
         x, y = self.get_position()
         x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
         y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        pygame.draw.rect(screen, pygame.Color('white'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+        screen.blit(pygame.transform.scale(self.image, (TILE_SIZE_BOARD, TILE_SIZE_BOARD)), (x, y))
 
     def update(self):
         x, y = self.get_position()
@@ -313,6 +315,8 @@ class Turret(BaseCharacter):
         self.last_update_time = pygame.time.get_ticks()
         self.bullets = []
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
 
     def copy(self, pos):
         return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
@@ -344,6 +348,8 @@ class Wall(BaseCharacter):
         super().__init__(health, x, y, directory)
         self.cost = cost
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
 
     def copy(self, pos):
         x, y = pos[1], pos[0]
@@ -361,6 +367,8 @@ class Generator(BaseCharacter):
         self.cost = cost
         self.last_update_time = pygame.time.get_ticks()
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
 
     def copy(self, pos):
         return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost,
@@ -381,6 +389,8 @@ class Enemy(BaseCharacter):
         self.enemy_speed = enemy_speed
         self.delay = delay
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
         self.last_update = pygame.time.get_ticks()
 
     def update(self):
