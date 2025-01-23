@@ -122,7 +122,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': load_image("dino0.png", "data/dino")
+                'stop': load_image("dino3.png", "data/dino")
             }
 
     class WaterBullet:
@@ -333,8 +333,9 @@ class Turret(BaseCharacter):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update_time >= self.delay:
             bullet = Settings.WaterBullet()
-            self.bullets.append(
-                self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames))
+            my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
+            self.bullets.append(my_bullet)
+            all_bullets.add(my_bullet)
             self.last_update_time = current_time
 
     def render_bullets(self, screen):
@@ -396,10 +397,10 @@ class Enemy(BaseCharacter):
     def update(self):
         current_time = pygame.time.get_ticks()
         # коллизия врагов и пуль
+        self.mask = pygame.mask.from_surface(self.image)
         for bullet in all_bullets:
-            enemy_mask = pygame.mask.from_surface(self.image)
-            bullet_mask = pygame.mask.from_surface(bullet.image)
-            if pygame.sprite.collide_mask(enemy_mask, bullet_mask):
+            bullet.mask = pygame.mask.from_surface(bullet.image)
+            if pygame.sprite.collide_mask(self, bullet):
                 damage = bullet.get_bullet_damage()
                 self.change_health(damage)
                 # удаление объектов, если они больше не являются частью игры
@@ -480,7 +481,8 @@ class Spawn:
         self.last_update = pygame.time.get_ticks()
         self.enemies = enemies
         self.current_enemies = []
-        self.wave = Wave(self.wave_counter, 10000, None)
+        # self.wave = Wave(self.wave_counter, 10000, None)
+        self.wave = Wave(self.wave_counter, 10000, self.waves_dict[self.get_wave_counter()])
 
     def get_wave_counter(self):
         return self.wave_counter
@@ -554,7 +556,8 @@ class Game:
         self.wave_counter = 0
         self.is_hold = False
         self.current_unit = None
-        self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
+        # self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
+        self.spawn = Spawn(2, self.wave_delay, self.enemies_for_spawn)
 
     def create_unit(self, pos, unit):
         return unit.copy(pos)
@@ -562,7 +565,9 @@ class Game:
     def render(self, screen):
         self.game_board.render(screen)
         self.spawn.render(screen)
-        self.game_board.render_bullets(screen)
+        # self.game_board.render_bullets(screen)
+        for bullet in all_bullets:
+            bullet.render(screen)
         render_text(screen, self.total_money, 36, (425, 80))
         render_text(screen, self.hp, 48, (95, 15))
 
