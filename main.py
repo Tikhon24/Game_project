@@ -64,6 +64,7 @@ class BaseCharacter(pygame.sprite.Sprite):
 
     def set_position(self, position):
         self.x, self.y = position
+        self.rect = self.rect.move(*position)
 
     def render(self, screen):
         x, y = self.get_position()
@@ -122,7 +123,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': load_image("dino3.png", "data/dino")
+                'stop': load_image("backly.png", "data/backly")
             }
 
     class WaterBullet:
@@ -293,6 +294,10 @@ class Bullet(pygame.sprite.Sprite):
 
     def set_position(self, position):
         self.x, self.y = position
+        self.rect = self.rect.move(*position)
+
+    def set_mask(self):
+        self.mask = pygame.mask.from_surface(self.image)
 
     def render(self, screen):
         x, y = self.get_position()
@@ -394,20 +399,20 @@ class Enemy(BaseCharacter):
         self.rect = self.image.get_rect()
         self.last_update = pygame.time.get_ticks()
 
+    def set_mask(self):
+        self.mask = pygame.mask.from_surface(self.image)
+
     def update(self):
         current_time = pygame.time.get_ticks()
         # коллизия врагов и пуль
-        self.mask = pygame.mask.from_surface(self.image)
-        for bullet in all_bullets:
-            bullet.mask = pygame.mask.from_surface(bullet.image)
-            if pygame.sprite.collide_mask(self, bullet):
-                damage = bullet.get_bullet_damage()
-                self.change_health(damage)
-                # удаление объектов, если они больше не являются частью игры
-                if not self.is_alive():
-                    all_enemies.remove(self)
-                    self.kill()
-                all_bullets.remove(bullet)
+        bullet = pygame.sprite.spritecollideany(self, all_bullets)
+        if bullet:
+            damage = bullet.get_bullet_damage()
+            self.change_health(damage)
+            # удаление объектов, если они больше не являются частью игры
+            if not self.is_alive():
+                all_enemies.remove(self)
+            all_bullets.remove(bullet)
         # коллизия врагов и юнитов(нужно добавить)
         if current_time - self.last_update >= self.delay:
             self.last_update = current_time
