@@ -129,11 +129,11 @@ class Settings:
     class WaterBullet:
         def __init__(self):
             self.directory = 'bucket_bullet'
-            self.speed = 4
+            self.speed = 0.5
             self.damage = 1
             self.frames = {
                 'motion': [],
-                'stop': load_image("dino2.png", "data/dino")
+                'stop': pygame.transform.scale(load_image("bullet.png", "data/bucket_bullet"), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
     class Generator:
@@ -171,7 +171,7 @@ class Settings:
                 'motion': [],
                 'die': [],
                 'finish': [],
-                'stop': load_image('Dino0.png', 'data/dino')
+                'stop': pygame.transform.scale(load_image('Dino0.png', 'data/dino'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
     class Nail:
@@ -277,6 +277,10 @@ class Bullet(pygame.sprite.Sprite):
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
 
+    def kill(self):
+        self.health = 0
+        del self
+
     def set_bullet_damage(self, bullet_damage):
         self.bullet_damage = bullet_damage
 
@@ -306,6 +310,20 @@ class Bullet(pygame.sprite.Sprite):
         screen.blit(pygame.transform.scale(self.image, (TILE_SIZE_BOARD, TILE_SIZE_BOARD)), (x, y))
 
     def update(self):
+        enemy = pygame.sprite.spritecollideany(self, all_enemies)
+        # print(str(enemy.rect))
+        print(str(self.rect))
+        if enemy:
+
+            damage = self.get_bullet_damage()
+            enemy.change_health(damage)
+            # удаление объектов, если они больше не являются частью игры
+            if not enemy.is_alive():
+                all_enemies.remove(enemy)
+                enemy.kill()
+            all_bullets.remove(self)
+            self.image = load_image('cursor.png', 'data/cursor')
+
         x, y = self.get_position()
         x += self.bullet_speed / FPS
         self.set_position(position=(x, y))
@@ -322,21 +340,23 @@ class Turret(BaseCharacter):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
+        self.flag = True
 
     def copy(self, pos):
         return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
 
     def update(self):
-        if self.bullets:
-            for bullet in self.bullets:
-                bullet.update()
-                if bullet.get_position()[0] * TILE_SIZE_BOARD + LEFT_GAME_BOARD >= WIDTH:
-                    try:
-                        self.bullets.remove(bullet)
-                    except ValueError as ve:
-                        print(ve)
+        # if self.bullets:
+        #     for bullet in self.bullets:
+        #         bullet.update()
+        #         if bullet.get_position()[0] * TILE_SIZE_BOARD + LEFT_GAME_BOARD >= WIDTH:
+        #             try:
+        #                 self.bullets.remove(bullet)
+        #             except ValueError as ve:
+        #                 print(ve)
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= self.delay:
+        if current_time - self.last_update_time >= self.delay and self.flag:
+            self.flag = False
             bullet = Settings.WaterBullet()
             my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
             self.bullets.append(my_bullet)
@@ -405,14 +425,14 @@ class Enemy(BaseCharacter):
     def update(self):
         current_time = pygame.time.get_ticks()
         # коллизия врагов и пуль
-        bullet = pygame.sprite.spritecollideany(self, all_bullets)
-        if bullet:
-            damage = bullet.get_bullet_damage()
-            self.change_health(damage)
-            # удаление объектов, если они больше не являются частью игры
-            if not self.is_alive():
-                all_enemies.remove(self)
-            all_bullets.remove(bullet)
+        # bullet = pygame.sprite.spritecollideany(self, all_bullets)
+        # if bullet:
+        #     damage = bullet.get_bullet_damage()
+        #     self.change_health(damage)
+        #     # удаление объектов, если они больше не являются частью игры
+        #     if not self.is_alive():
+        #         all_enemies.remove(self)
+        #     all_bullets.remove(bullet)
         # коллизия врагов и юнитов(нужно добавить)
         if current_time - self.last_update >= self.delay:
             self.last_update = current_time
@@ -449,6 +469,7 @@ class Wave:
         enemy = Enemy(x, y, params.directory, params.health, params.speed, params.damage, params.delay, params.frames)
         self.current_enemies.append(enemy)
         self.new_enemies.append(enemy)
+        all_enemies.add(enemy)
 
     def update(self):
         result = []
@@ -569,7 +590,9 @@ class Game:
 
     def render(self, screen):
         self.game_board.render(screen)
-        self.spawn.render(screen)
+        # self.spawn.render(screen)
+        for enemy in all_enemies:
+            enemy.render(screen)
         # self.game_board.render_bullets(screen)
         for bullet in all_bullets:
             bullet.render(screen)
