@@ -258,12 +258,6 @@ class Shop(Board):
         x, y = pos
         return self.board[y][x]
 
-    def render(self, screen):
-        for row in self.board:
-            for unit in row:
-                if unit is not None:
-                    unit.render(screen, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP)
-
 
 class Bullet:
     def __init__(self, x, y, directory, bullet_speed, bullet_damage, frames):

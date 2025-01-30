@@ -54,7 +54,7 @@ class BaseCharacter(pygame.sprite.Sprite):
         self.directory = directory
 
     def change_health(self, damage):
-        self.health -= self.health - damage
+        self.health -= damage
 
     def is_alive(self):
         return self.health > 0
@@ -63,8 +63,9 @@ class BaseCharacter(pygame.sprite.Sprite):
         return self.x, self.y
 
     def set_position(self, position):
-        self.x, self.y = position
-        self.rect = self.rect.move(*position)
+        x, y = position
+        self.x, self.y = x, y
+        self.rect.x, self.rect.y = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD, TOP_GAME_BOARD + y * TILE_SIZE_BOARD
 
     def render(self, screen):
         x, y = self.get_position()
@@ -129,11 +130,12 @@ class Settings:
     class WaterBullet:
         def __init__(self):
             self.directory = 'bucket_bullet'
-            self.speed = 0.5
+            self.speed = 3.5
             self.damage = 1
             self.frames = {
                 'motion': [],
-                'stop': pygame.transform.scale(load_image("bullet.png", "data/bucket_bullet"), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                'stop': pygame.transform.scale(load_image("bullet.png", "data/bucket_bullet"),
+                                               (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
     class Generator:
@@ -180,13 +182,13 @@ class Settings:
             self.health = 10
             self.damage = 2
             self.delay = 4000
-            self.speed = 0.1
+            self.speed = 0.15
             self.frames = {
                 'atack': [],
                 'motion': [],
                 'die': [],
                 'finish': [],
-                'stop': load_image("dino0.png", "data/dino")
+                'stop': pygame.transform.scale(load_image('Dino0.png', 'data/dino'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
 
@@ -221,28 +223,8 @@ class GameBoard(Board):
     def __init__(self, width, height, left, top, tile_size):
         super().__init__(width, height, left, top, tile_size)
 
-    def render(self, screen):
-        for row in self.board:
-            for unit in row:
-                if unit is not None:
-                    unit.render(screen)
-
-    def render_bullets(self, screen):
-        for row in self.board:
-            for unit in row:
-                if unit is not None and isinstance(unit, Turret):
-                    unit.render_bullets(screen)
-
-    def update(self):
-        count = 0
-        for row in self.board:
-            for unit in row:
-                if unit is not None:
-                    if isinstance(unit, Generator):
-                        count += unit.update()
-                    else:
-                        unit.update()
-        return count
+    def input_unit(self, x, y, unit):
+        self.board[y][x] = unit
 
 
 class Shop(Board):
@@ -258,12 +240,6 @@ class Shop(Board):
         x, y = pos
         return self.board[y][x]
 
-    def render(self, screen):
-        for row in self.board:
-            for unit in row:
-                if unit is not None:
-                    unit.render(screen, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP)
-
 
 class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, directory, bullet_speed, bullet_damage, frames):
@@ -276,6 +252,7 @@ class Bullet(pygame.sprite.Sprite):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x, self.y
 
     def kill(self):
         self.health = 0
@@ -297,8 +274,9 @@ class Bullet(pygame.sprite.Sprite):
         return self.x, self.y
 
     def set_position(self, position):
-        self.x, self.y = position
-        self.rect = self.rect.move(*position)
+        x, y = position
+        self.x, self.y = x, y
+        self.rect.x, self.rect.y = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD, TOP_GAME_BOARD + y * TILE_SIZE_BOARD
 
     def set_mask(self):
         self.mask = pygame.mask.from_surface(self.image)
@@ -311,10 +289,9 @@ class Bullet(pygame.sprite.Sprite):
 
     def update(self):
         enemy = pygame.sprite.spritecollideany(self, all_enemies)
-        # print(str(enemy.rect))
-        print(str(self.rect))
         if enemy:
-
+            print(self.rect)
+            print(enemy.rect)
             damage = self.get_bullet_damage()
             enemy.change_health(damage)
             # удаление объектов, если они больше не являются частью игры
@@ -336,37 +313,23 @@ class Turret(BaseCharacter):
         self.cost = cost
         self.bullet = bullet
         self.last_update_time = pygame.time.get_ticks()
-        self.bullets = []
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x, self.y
         self.flag = True
 
     def copy(self, pos):
         return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
 
     def update(self):
-        # if self.bullets:
-        #     for bullet in self.bullets:
-        #         bullet.update()
-        #         if bullet.get_position()[0] * TILE_SIZE_BOARD + LEFT_GAME_BOARD >= WIDTH:
-        #             try:
-        #                 self.bullets.remove(bullet)
-        #             except ValueError as ve:
-        #                 print(ve)
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update_time >= self.delay and self.flag:
-            self.flag = False
+            # self.flag = False
             bullet = Settings.WaterBullet()
             my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
-            self.bullets.append(my_bullet)
             all_bullets.add(my_bullet)
             self.last_update_time = current_time
-
-    def render_bullets(self, screen):
-        if self.bullets:
-            for bullet in self.bullets:
-                bullet.render(screen)
 
 
 class Wall(BaseCharacter):
@@ -376,6 +339,7 @@ class Wall(BaseCharacter):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x, self.y
 
     def copy(self, pos):
         x, y = pos[1], pos[0]
@@ -395,6 +359,7 @@ class Generator(BaseCharacter):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x, self.y
 
     def copy(self, pos):
         return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost,
@@ -417,6 +382,7 @@ class Enemy(BaseCharacter):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
+        self.rect.x, self.rect.y = self.x, self.y
         self.last_update = pygame.time.get_ticks()
 
     def set_mask(self):
@@ -424,16 +390,6 @@ class Enemy(BaseCharacter):
 
     def update(self):
         current_time = pygame.time.get_ticks()
-        # коллизия врагов и пуль
-        # bullet = pygame.sprite.spritecollideany(self, all_bullets)
-        # if bullet:
-        #     damage = bullet.get_bullet_damage()
-        #     self.change_health(damage)
-        #     # удаление объектов, если они больше не являются частью игры
-        #     if not self.is_alive():
-        #         all_enemies.remove(self)
-        #     all_bullets.remove(bullet)
-        # коллизия врагов и юнитов(нужно добавить)
         if current_time - self.last_update >= self.delay:
             self.last_update = current_time
         x, y = self.get_position()
@@ -455,7 +411,6 @@ class Wave:
             2: Settings.Nail
         }
         self.count_of_spawn = 0
-        self.new_enemies = []
 
     def start_wave(self):
         pass
@@ -466,14 +421,10 @@ class Wave:
     def create_enemy(self, enemy_type, pos):
         params = enemy_type()
         x, y = pos
-        enemy = Enemy(x, y, params.directory, params.health, params.speed, params.damage, params.delay, params.frames)
-        self.current_enemies.append(enemy)
-        self.new_enemies.append(enemy)
-        all_enemies.add(enemy)
+        all_enemies.add(
+            Enemy(x, y, params.directory, params.health, params.speed, params.damage, params.delay, params.frames))
 
     def update(self):
-        result = []
-
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update >= self.delay:
             if self.enemy_matrix:
@@ -486,13 +437,7 @@ class Wave:
                             pass
                         case _:
                             self.create_enemy(self.relations_enemies[id], pos=(x, y))
-                for enemy in self.new_enemies:
-                    result.append(enemy)
-                self.new_enemies.clear()
             self.last_update = current_time
-        if result:
-            return result
-        return None
 
     def render(self, screen):
         for enemy in self.current_enemies:
@@ -525,22 +470,6 @@ class Spawn:
             enemy_matrix = self.waves_dict[self.get_wave_counter()]
             self.wave = Wave(self.get_wave_counter(), 10000, enemy_matrix)
             self.last_update = current_time
-
-        if self.wave_counter != 0:
-            new_enemies = self.wave.update()
-            if new_enemies:
-                for enemy in new_enemies:
-                    self.current_enemies.append(enemy)
-                new_enemies.clear()
-
-        if self.current_enemies:
-            for enemy in self.current_enemies:
-                enemy.update()
-
-    def render(self, screen):
-        if self.current_enemies:
-            for enemy in self.current_enemies:
-                enemy.render(screen)
 
     def generate_wave_matrix(self, level, enemies):
         """Генерирует матрицу для заданной волны"""
@@ -589,11 +518,10 @@ class Game:
         return unit.copy(pos)
 
     def render(self, screen):
-        self.game_board.render(screen)
-        # self.spawn.render(screen)
+        for unit in all_units:
+            unit.render(screen)
         for enemy in all_enemies:
             enemy.render(screen)
-        # self.game_board.render_bullets(screen)
         for bullet in all_bullets:
             bullet.render(screen)
         render_text(screen, self.total_money, 36, (425, 80))
@@ -615,7 +543,9 @@ class Game:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
                 if self.current_unit.cost <= self.total_money:
                     self.total_money -= self.current_unit.cost
-                    self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
+                    unit = self.create_unit(game_board_cell, self.current_unit)
+                    self.game_board.input_unit(x, y, unit)
+                    all_units.add(unit)
                 self.is_hold = False
                 self.current_unit = None
 
@@ -637,7 +567,21 @@ class Game:
 
     def update(self):
         self.spawn.update()
-        self.total_money += self.game_board.update()
+
+        enemies = all_enemies.sprites()
+        for i in range(len(enemies)):
+            enemies[i].update()
+
+        units = all_units.sprites()
+        for i in range(len(units)):
+            if isinstance(units[i], Generator):
+                self.total_money += units[i].update()
+            else:
+                units[i].update()
+
+        bullets = all_bullets.sprites()
+        for i in range(len(bullets)):
+            bullets[i].update()
 
 
 def init_shop(settings: Settings):
