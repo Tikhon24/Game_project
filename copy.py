@@ -137,7 +137,7 @@ class Settings:
             self.damage = 1
             self.frames = {
                 'motion': [],
-                'stop': load_image("dino2.png", "data/dino")
+                'stop': load_image("Dino2.png", "data/dino")
             }
 
     class Generator:
@@ -151,7 +151,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': load_image("dino0.png", "data/dino")
+                'stop': load_image("Dino0.png", "data/dino")
             }
 
     class Wall:
@@ -160,7 +160,7 @@ class Settings:
             self.health = 8
             self.cost = 50
             self.frames = {
-                'stop': load_image("dino0.png", "data/dino")
+                'stop': load_image("Dino0.png", "data/dino")
             }
 
     class Dino:
@@ -190,7 +190,7 @@ class Settings:
                 'motion': [],
                 'die': [],
                 'finish': [],
-                'stop': load_image("dino0.png", "data/dino")
+                'stop': load_image("Dino0.png", "data/dino")
             }
 
 

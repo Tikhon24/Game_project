@@ -3,6 +3,7 @@ import os
 import sys
 import random
 
+pygame.mixer.init()
 # -=----------------------------------=-
 FONT = "data/font/yellwa.ttf"
 SIZE = WIDTH, HEIGHT = (1920, 1080)
@@ -15,12 +16,14 @@ TOP_GAME_BOARD = 251
 LEFT_SHOP = 845
 TOP_SHOP = 37
 FPS = 30
+SOUNDS = {
+    "shopping": pygame.mixer.Sound('data/sound/shopping.mp3'),
+    "ban": pygame.mixer.Sound('data/sound/ban.mp3')
+}
 # -=----------------------------------=-
 all_bullets = pygame.sprite.Group()
 all_enemies = pygame.sprite.Group()
 all_units = pygame.sprite.Group()
-
-
 # -=----------------------------------=-
 
 
@@ -541,11 +544,12 @@ class Game:
             y, x = game_board_cell
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
-                if self.current_unit.cost <= self.total_money:
+                if self.game_board.board[y][x] is None:
                     self.total_money -= self.current_unit.cost
-                    unit = self.create_unit(game_board_cell, self.current_unit)
-                    self.game_board.input_unit(x, y, unit)
-                    all_units.add(unit)
+                    self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
+                    SOUNDS["shopping"].play()
+                else:
+                    SOUNDS["ban"].play()
                 self.is_hold = False
                 self.current_unit = None
 
@@ -553,10 +557,14 @@ class Game:
             y, x = shop_cell
             if not up:
                 if self.current_unit is not self.shop.get_unit((x, y)):
-
                     self.current_unit = self.shop.get_unit((x, y))
-                    self.is_hold = True
-                    # привязка спрайта к курсору
+                    if self.current_unit.cost <= self.total_money:
+                        self.is_hold = True
+                        # привязка спрайта к курсору
+                    else:
+                        SOUNDS["ban"].play()
+                        self.is_hold = False
+                        self.current_unit = None
                 else:
                     self.is_hold = False
                     self.current_unit = None
