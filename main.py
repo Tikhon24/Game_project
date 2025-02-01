@@ -127,7 +127,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': pygame.transform.scale(load_image("backly.png", "data/backly"),
+                'stop': pygame.transform.scale(load_image("Shape0.png", "data/shape"),
                                                (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
@@ -138,7 +138,7 @@ class Settings:
             self.damage = 1
             self.frames = {
                 'motion': [],
-                'stop': pygame.transform.scale(load_image("bullet.png", "data/bucket_bullet"),
+                'stop': pygame.transform.scale(load_image("Bul0.png", "data/bullet"),
                                                (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
@@ -153,7 +153,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': pygame.transform.scale(load_image("dino0.png", "data/dino"),
+                'stop': pygame.transform.scale(load_image("Rustik0.png", "data/rustik"),
                                                (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
@@ -163,7 +163,7 @@ class Settings:
             self.health = 8
             self.cost = 50
             self.frames = {
-                'stop': pygame.transform.scale(load_image("dino0.png", "data/dino"),
+                'stop': pygame.transform.scale(load_image("Aqueduct.png", "data/aqueduct"),
                                                (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
@@ -194,7 +194,7 @@ class Settings:
                 'motion': [],
                 'die': [],
                 'finish': [],
-                'stop': pygame.transform.scale(load_image('Dino0.png', 'data/dino'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                'stop': pygame.transform.scale(load_image('Nail0.png', 'data/nail'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
 
