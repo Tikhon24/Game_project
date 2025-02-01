@@ -3,26 +3,29 @@ import os
 import sys
 import random
 
+pygame.mixer.init()
 # -=----------------------------------=-
 FONT = "data/font/yellwa.ttf"
 SIZE = WIDTH, HEIGHT = (1920, 1080)
 MAX_WAVE = 20
 TILE_SIZE_BOARD = 150
 TILE_SIZE_SHOP = 145
-DIR_SPAWN = 'spawn'
 DIR_DATA = 'data'
 LEFT_GAME_BOARD = 541
 TOP_GAME_BOARD = 251
 LEFT_SHOP = 845
 TOP_SHOP = 37
 FPS = 30
+SOUNDS = {
+    "shopping": pygame.mixer.Sound('data/sound/shopping.mp3'),
+    "ban": pygame.mixer.Sound('data/sound/ban.mp3')
+}
 # -=----------------------------------=-
 all_bullets = pygame.sprite.Group()
 all_enemies = pygame.sprite.Group()
 all_units = pygame.sprite.Group()
-
-
 # -=----------------------------------=-
+
 
 
 def load_image(name, directory, colorkey=None):
@@ -48,11 +51,11 @@ def terminate():
 
 class BaseCharacter(pygame.sprite.Sprite):
     def __init__(self, health, x, y, directory):
+        super().__init__()
         self.health = health
         self.x = x
         self.y = y
         self.directory = directory
-        self.image = load_image("dino0.png", "data/dino")
 
     def change_health(self, damage):
         self.health -= self.health - damage
@@ -65,6 +68,7 @@ class BaseCharacter(pygame.sprite.Sprite):
 
     def set_position(self, position):
         self.x, self.y = position
+        self.rect = self.rect.move(*position)
 
     def render(self, screen):
         x, y = self.get_position()
@@ -123,7 +127,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': ''
+                'stop': load_image("backly.png", "data/backly")
             }
 
     class WaterBullet:
@@ -133,7 +137,7 @@ class Settings:
             self.damage = 1
             self.frames = {
                 'motion': [],
-                'stop': ''
+                'stop': load_image("dino2.png", "data/dino")
             }
 
     class Generator:
@@ -147,7 +151,7 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': ''
+                'stop': load_image("dino0.png", "data/dino")
             }
 
     class Wall:
@@ -156,7 +160,7 @@ class Settings:
             self.health = 8
             self.cost = 50
             self.frames = {
-                'stop': ''
+                'stop': load_image("dino0.png", "data/dino")
             }
 
     class Dino:
@@ -186,7 +190,7 @@ class Settings:
                 'motion': [],
                 'die': [],
                 'finish': [],
-                'stop': ''
+                'stop': load_image("dino0.png", "data/dino")
             }
 
 
@@ -258,15 +262,24 @@ class Shop(Board):
         x, y = pos
         return self.board[y][x]
 
+    def render(self, screen):
+        for row in self.board:
+            for unit in row:
+                if unit is not None:
+                    unit.render(screen, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP)
 
-class Bullet:
+
+class Bullet(pygame.sprite.Sprite):
     def __init__(self, x, y, directory, bullet_speed, bullet_damage, frames):
+        super().__init__(all_bullets)
         self.bullet_damage = bullet_damage
         self.bullet_speed = bullet_speed
         self.x = x
         self.y = y
         self.directory = directory
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
 
     def set_bullet_damage(self, bullet_damage):
         self.bullet_damage = bullet_damage
@@ -285,12 +298,16 @@ class Bullet:
 
     def set_position(self, position):
         self.x, self.y = position
+        self.rect = self.rect.move(*position)
+
+    def set_mask(self):
+        self.mask = pygame.mask.from_surface(self.image)
 
     def render(self, screen):
         x, y = self.get_position()
         x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
         y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        pygame.draw.rect(screen, pygame.Color('white'), (x, y, TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+        screen.blit(pygame.transform.scale(self.image, (TILE_SIZE_BOARD, TILE_SIZE_BOARD)), (x, y))
 
     def update(self):
         x, y = self.get_position()
@@ -307,6 +324,8 @@ class Turret(BaseCharacter):
         self.last_update_time = pygame.time.get_ticks()
         self.bullets = []
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
 
     def copy(self, pos):
         return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
@@ -323,8 +342,9 @@ class Turret(BaseCharacter):
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update_time >= self.delay:
             bullet = Settings.WaterBullet()
-            self.bullets.append(
-                self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames))
+            my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
+            self.bullets.append(my_bullet)
+            all_bullets.add(my_bullet)
             self.last_update_time = current_time
 
     def render_bullets(self, screen):
@@ -338,6 +358,8 @@ class Wall(BaseCharacter):
         super().__init__(health, x, y, directory)
         self.cost = cost
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
 
     def copy(self, pos):
         x, y = pos[1], pos[0]
@@ -355,6 +377,8 @@ class Generator(BaseCharacter):
         self.cost = cost
         self.last_update_time = pygame.time.get_ticks()
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
 
     def copy(self, pos):
         return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost,
@@ -375,22 +399,24 @@ class Enemy(BaseCharacter):
         self.enemy_speed = enemy_speed
         self.delay = delay
         self.frames = frames
+        self.image = self.frames['stop']
+        self.rect = self.image.get_rect()
         self.last_update = pygame.time.get_ticks()
+
+    def set_mask(self):
+        self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
         current_time = pygame.time.get_ticks()
         # коллизия врагов и пуль
-        for bullet in all_bullets:
-            enemy_mask = pygame.mask.from_surface(self.image)
-            bullet_mask = pygame.mask.from_surface(bullet.image)
-            if pygame.sprite.collide_mask(enemy_mask, bullet_mask):
-                damage = bullet.get_bullet_damage()
-                self.change_health(damage)
-                # удаление объектов, если они больше не являются частью игры
-                if not self.is_alive():
-                    all_enemies.remove(self)
-                    self.kill()
-                all_bullets.remove(bullet)
+        bullet = pygame.sprite.spritecollideany(self, all_bullets)
+        if bullet:
+            damage = bullet.get_bullet_damage()
+            self.change_health(damage)
+            # удаление объектов, если они больше не являются частью игры
+            if not self.is_alive():
+                all_enemies.remove(self)
+            all_bullets.remove(bullet)
         # коллизия врагов и юнитов(нужно добавить)
         if current_time - self.last_update >= self.delay:
             self.last_update = current_time
@@ -464,7 +490,8 @@ class Spawn:
         self.last_update = pygame.time.get_ticks()
         self.enemies = enemies
         self.current_enemies = []
-        self.wave = Wave(self.wave_counter, 10000, None)
+        # self.wave = Wave(self.wave_counter, 10000, None)
+        self.wave = Wave(self.wave_counter, 10000, self.waves_dict[self.get_wave_counter()])
 
     def get_wave_counter(self):
         return self.wave_counter
@@ -538,7 +565,8 @@ class Game:
         self.wave_counter = 0
         self.is_hold = False
         self.current_unit = None
-        self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
+        # self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
+        self.spawn = Spawn(2, self.wave_delay, self.enemies_for_spawn)
 
     def create_unit(self, pos, unit):
         return unit.copy(pos)
@@ -546,7 +574,9 @@ class Game:
     def render(self, screen):
         self.game_board.render(screen)
         self.spawn.render(screen)
-        self.game_board.render_bullets(screen)
+        # self.game_board.render_bullets(screen)
+        for bullet in all_bullets:
+            bullet.render(screen)
         render_text(screen, self.total_money, 36, (425, 80))
         render_text(screen, self.hp, 48, (95, 15))
 
@@ -564,9 +594,12 @@ class Game:
             y, x = game_board_cell
             if self.current_unit is not None and self.is_hold:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
-                if self.current_unit.cost <= self.total_money:
+                if self.game_board.board[y][x] is None:
                     self.total_money -= self.current_unit.cost
                     self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
+                    SOUNDS["shopping"].play()
+                else:
+                    SOUNDS["ban"].play()
                 self.is_hold = False
                 self.current_unit = None
 
@@ -574,10 +607,14 @@ class Game:
             y, x = shop_cell
             if not up:
                 if self.current_unit is not self.shop.get_unit((x, y)):
-
                     self.current_unit = self.shop.get_unit((x, y))
-                    self.is_hold = True
-                    # привязка спрайта к курсору
+                    if self.current_unit.cost <= self.total_money:
+                        self.is_hold = True
+                        # привязка спрайта к курсору
+                    else:
+                        SOUNDS["ban"].play()
+                        self.is_hold = False
+                        self.current_unit = None
                 else:
                     self.is_hold = False
                     self.current_unit = None
