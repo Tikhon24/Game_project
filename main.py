@@ -74,7 +74,7 @@ class BaseCharacter(pygame.sprite.Sprite):
         x, y = self.get_position()
         x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
         y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        screen.blit(pygame.transform.scale(self.image, (TILE_SIZE_BOARD, TILE_SIZE_BOARD)), (x, y))
+        screen.blit(self.image, (x, y))
 
     def kill(self):
         self.health = 0
@@ -127,7 +127,8 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': load_image("backly.png", "data/backly")
+                'stop': pygame.transform.scale(load_image("backly.png", "data/backly"),
+                                               (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
     class WaterBullet:
@@ -152,7 +153,8 @@ class Settings:
                 'atack': [],
                 'motion': [],
                 'die': [],
-                'stop': load_image("dino0.png", "data/dino")
+                'stop': pygame.transform.scale(load_image("dino0.png", "data/dino"),
+                                               (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
     class Wall:
@@ -161,7 +163,8 @@ class Settings:
             self.health = 8
             self.cost = 50
             self.frames = {
-                'stop': load_image("dino0.png", "data/dino")
+                'stop': pygame.transform.scale(load_image("dino0.png", "data/dino"),
+                                               (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
     class Dino:
@@ -503,7 +506,7 @@ class Spawn:
 
 
 class Game:
-    def __init__(self, game_board, shop, settings):
+    def __init__(self, game_board: GameBoard, shop, settings):
         self.game_board = game_board
         self.shop = shop
         self.settings = settings
@@ -546,7 +549,9 @@ class Game:
                 # создаем юнита в клетке, отвязываем спрайт от курсора
                 if self.game_board.board[y][x] is None:
                     self.total_money -= self.current_unit.cost
-                    self.game_board.board[y][x] = self.create_unit(game_board_cell, self.current_unit)
+                    unit = self.create_unit(game_board_cell, self.current_unit)
+                    self.game_board.input_unit(x, y, unit)
+                    all_units.add(unit)
                     SOUNDS["shopping"].play()
                 else:
                     SOUNDS["ban"].play()
