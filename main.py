@@ -24,6 +24,8 @@ SOUNDS = {
 all_bullets = pygame.sprite.Group()
 all_enemies = pygame.sprite.Group()
 all_units = pygame.sprite.Group()
+
+
 # -=----------------------------------=-
 
 
@@ -55,6 +57,7 @@ class BaseCharacter(pygame.sprite.Sprite):
         self.x = x
         self.y = y
         self.directory = directory
+        self.is_deleted = False
 
     def change_health(self, damage):
         self.health -= damage
@@ -85,6 +88,9 @@ class BaseCharacter(pygame.sprite.Sprite):
 
     def __repr__(self):
         return str(self.directory)
+
+    def __del__(self):
+        self.is_deleted = True
 
 
 class Settings:
@@ -146,7 +152,8 @@ class Settings:
         def __init__(self):
             self.directory = 'generator'
             self.health = 5
-            self.delay = 10000
+            # self.delay = 10000
+            self.delay = 100
             self.cost = 50
             self.plus_cost = 25
             self.frames = {
@@ -232,6 +239,14 @@ class GameBoard(Board):
     def input_unit(self, x, y, unit):
         self.board[y][x] = unit
 
+    def update(self):
+        for y in range(self.height):
+            for x in range(self.width):
+                unit = self.board[y][x]
+                if unit:
+                    if unit.is_deleted:
+                        self.input_unit(x, y, None)
+
 
 class Shop(Board):
     def __init__(self, width, height, left, top, tile_size, units):
@@ -258,10 +273,9 @@ class Bullet(pygame.sprite.Sprite):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.x, self.y
+        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
 
     def kill(self):
-        self.health = 0
         del self
 
     def set_bullet_damage(self, bullet_damage):
@@ -296,8 +310,6 @@ class Bullet(pygame.sprite.Sprite):
     def update(self):
         enemy = pygame.sprite.spritecollideany(self, all_enemies)
         if enemy:
-            print(self.rect)
-            print(enemy.rect)
             damage = self.get_bullet_damage()
             enemy.change_health(damage)
             # удаление объектов, если они больше не являются частью игры
@@ -305,7 +317,7 @@ class Bullet(pygame.sprite.Sprite):
                 all_enemies.remove(enemy)
                 enemy.kill()
             all_bullets.remove(self)
-            self.image = load_image('cursor.png', 'data/cursor')
+            self.kill()
 
         x, y = self.get_position()
         x += self.bullet_speed / FPS
@@ -322,7 +334,7 @@ class Turret(BaseCharacter):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.x, self.y
+        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
         self.flag = True
 
     def copy(self, pos):
@@ -345,7 +357,7 @@ class Wall(BaseCharacter):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.x, self.y
+        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
 
     def copy(self, pos):
         x, y = pos[1], pos[0]
@@ -365,7 +377,7 @@ class Generator(BaseCharacter):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.x, self.y
+        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
 
     def copy(self, pos):
         return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost,
@@ -388,18 +400,37 @@ class Enemy(BaseCharacter):
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = self.x, self.y
+        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
         self.last_update = pygame.time.get_ticks()
+        self.is_walk = True
 
     def set_mask(self):
         self.mask = pygame.mask.from_surface(self.image)
 
+    def get_damage(self):
+        return self.damage
+
     def update(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update >= self.delay:
+        unit = pygame.sprite.spritecollideany(self, all_units)
+        if unit:
+            if self.is_walk:
+                self.last_update = current_time - self.delay
+            self.is_walk = False
+        else:
+            self.is_walk = True
+        if current_time - self.last_update >= self.delay and not self.is_walk:
+            # боевка
+            damage = self.get_damage()
+            unit.change_health(damage)
+            if not unit.is_alive():
+                all_units.remove(unit)
+                unit.kill()
+                unit.is_deleted = True
             self.last_update = current_time
         x, y = self.get_position()
-        x -= self.enemy_speed / FPS
+        if self.is_walk:
+            x -= self.enemy_speed / FPS
         self.set_position(position=(x, y))
 
 
@@ -476,6 +507,7 @@ class Spawn:
             enemy_matrix = self.waves_dict[self.get_wave_counter()]
             self.wave = Wave(self.get_wave_counter(), 10000, enemy_matrix)
             self.last_update = current_time
+        self.wave.update()
 
     def generate_wave_matrix(self, level, enemies):
         """Генерирует матрицу для заданной волны"""
@@ -580,6 +612,7 @@ class Game:
 
     def update(self):
         self.spawn.update()
+        self.game_board.update()
 
         enemies = all_enemies.sprites()
         for i in range(len(enemies)):
@@ -665,7 +698,6 @@ def main():
 
         if pygame.mouse.get_focused():
             screen.blit(cursor_image, mouse_coord)
-
         clock.tick(FPS)
         pygame.display.flip()
 
