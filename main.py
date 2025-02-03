@@ -3,6 +3,10 @@ import os
 import sys
 import random
 
+from settings import Settings
+from units import Bullet, Turret, Generator, Wall, Enemy
+from units import all_units, all_bullets, all_enemies
+
 pygame.mixer.init()
 # -=----------------------------------=-
 FONT = "data/font/yellwa.ttf"
@@ -18,15 +22,11 @@ TOP_SHOP = 37
 FPS = 30
 SOUNDS = {
     "shopping": pygame.mixer.Sound('data/sound/shopping.mp3'),
-    "ban": pygame.mixer.Sound('data/sound/ban.mp3')
+    "ban": pygame.mixer.Sound('data/sound/ban.mp3'),
+    "shot": pygame.mixer.Sound('data/sound/shot.mp3'),
+    "death_en": pygame.mixer.Sound('data/sound/death_en.mp3'),
+    "death_un": pygame.mixer.Sound('data/sound/death_un.mp3')
 }
-# -=----------------------------------=-
-all_bullets = pygame.sprite.Group()
-all_enemies = pygame.sprite.Group()
-all_units = pygame.sprite.Group()
-
-
-# -=----------------------------------=-
 
 
 def load_image(name, directory, colorkey=None):
@@ -48,161 +48,6 @@ def render_text(screen, text, font_size, coords):
 def terminate():
     pygame.quit()
     sys.exit()
-
-
-class BaseCharacter(pygame.sprite.Sprite):
-    def __init__(self, health, x, y, directory):
-        super().__init__()
-        self.health = health
-        self.x = x
-        self.y = y
-        self.directory = directory
-        self.is_deleted = False
-
-    def change_health(self, damage):
-        self.health -= damage
-
-    def is_alive(self):
-        return self.health > 0
-
-    def get_position(self):
-        return self.x, self.y
-
-    def set_position(self, position):
-        x, y = position
-        self.x, self.y = x, y
-        self.rect.x, self.rect.y = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD, TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-
-    def render(self, screen):
-        x, y = self.get_position()
-        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
-        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        screen.blit(self.image, (x, y))
-
-    def kill(self):
-        self.health = 0
-        del self
-
-    def __str__(self):
-        return self.directory
-
-    def __repr__(self):
-        return str(self.directory)
-
-    def __del__(self):
-        self.is_deleted = True
-
-
-class Settings:
-    """Игровые настройки"""
-
-    def __init__(self):
-        self.start_money = 100
-        self.hp = 20
-        self.wave_delay = 120000
-        self.enemies_for_waves = {
-            1: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
-            2: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
-            3: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2],
-            4: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2],
-            5: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2],
-            6: [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2],
-            7: [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2],
-            8: [1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2],
-            9: [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2],
-            10: [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2],
-            11: [1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2],
-            12: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
-            13: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
-            14: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
-            15: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
-            16: [1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2],
-            17: [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
-            18: [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
-            19: [1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2],
-            20: [1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2]
-        }
-
-    class WaterTurret:
-        def __init__(self):
-            self.directory = 'bucket'
-            self.health = 5
-            self.delay = 5000
-            self.cost = 100
-            self.frames = {
-                'atack': [],
-                'motion': [],
-                'die': [],
-                'stop': pygame.transform.scale(load_image("Shape0.png", "data/shape"),
-                                               (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-            }
-
-    class WaterBullet:
-        def __init__(self):
-            self.directory = 'bucket_bullet'
-            self.speed = 3.5
-            self.damage = 1
-            self.frames = {
-                'motion': [],
-                'stop': pygame.transform.scale(load_image("Bul0.png", "data/bullet"),
-                                               (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-            }
-
-    class Generator:
-        def __init__(self):
-            self.directory = 'generator'
-            self.health = 5
-            # self.delay = 10000
-            self.delay = 100
-            self.cost = 50
-            self.plus_cost = 25
-            self.frames = {
-                'atack': [],
-                'motion': [],
-                'die': [],
-                'stop': pygame.transform.scale(load_image("Rustik0.png", "data/rustik"),
-                                               (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-            }
-
-    class Wall:
-        def __init__(self):
-            self.directory = 'wall'
-            self.health = 8
-            self.cost = 50
-            self.frames = {
-                'stop': pygame.transform.scale(load_image("Aqueduct.png", "data/aqueduct"),
-                                               (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-            }
-
-    class Dino:
-        def __init__(self):
-            self.directory = 'dino'
-            self.health = 5
-            self.damage = 1
-            self.delay = 3000
-            self.speed = 0.2
-            self.frames = {
-                'atack': [],
-                'motion': [],
-                'die': [],
-                'finish': [],
-                'stop': pygame.transform.scale(load_image('Dino0.png', 'data/dino'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-            }
-
-    class Nail:
-        def __init__(self):
-            self.directory = 'nail'
-            self.health = 10
-            self.damage = 2
-            self.delay = 4000
-            self.speed = 0.15
-            self.frames = {
-                'atack': [],
-                'motion': [],
-                'die': [],
-                'finish': [],
-                'stop': pygame.transform.scale(load_image('Nail0.png', 'data/nail'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-            }
 
 
 class Board:
@@ -260,178 +105,6 @@ class Shop(Board):
     def get_unit(self, pos):
         x, y = pos
         return self.board[y][x]
-
-
-class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, directory, bullet_speed, bullet_damage, frames):
-        super().__init__(all_bullets)
-        self.bullet_damage = bullet_damage
-        self.bullet_speed = bullet_speed
-        self.x = x
-        self.y = y
-        self.directory = directory
-        self.frames = frames
-        self.image = self.frames['stop']
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
-
-    def kill(self):
-        del self
-
-    def set_bullet_damage(self, bullet_damage):
-        self.bullet_damage = bullet_damage
-
-    def set_bullet_speed(self, bullet_speed):
-        self.bullet_speed = bullet_speed
-
-    def get_bullet_speed(self):
-        return self.bullet_speed
-
-    def get_bullet_damage(self):
-        return self.bullet_damage
-
-    def get_position(self):
-        return self.x, self.y
-
-    def set_position(self, position):
-        x, y = position
-        self.x, self.y = x, y
-        self.rect.x, self.rect.y = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD, TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-
-    def set_mask(self):
-        self.mask = pygame.mask.from_surface(self.image)
-
-    def render(self, screen):
-        x, y = self.get_position()
-        x = LEFT_GAME_BOARD + x * TILE_SIZE_BOARD
-        y = TOP_GAME_BOARD + y * TILE_SIZE_BOARD
-        screen.blit(pygame.transform.scale(self.image, (TILE_SIZE_BOARD, TILE_SIZE_BOARD)), (x, y))
-
-    def update(self):
-        enemy = pygame.sprite.spritecollideany(self, all_enemies)
-        if enemy:
-            damage = self.get_bullet_damage()
-            enemy.change_health(damage)
-            # удаление объектов, если они больше не являются частью игры
-            if not enemy.is_alive():
-                all_enemies.remove(enemy)
-                enemy.kill()
-            all_bullets.remove(self)
-            self.kill()
-
-        x, y = self.get_position()
-        x += self.bullet_speed / FPS
-        self.set_position(position=(x, y))
-
-
-class Turret(BaseCharacter):
-    def __init__(self, x, y, directory, cost, health, delay, bullet, frames):
-        super().__init__(health, x, y, directory)
-        self.delay = delay
-        self.cost = cost
-        self.bullet = bullet
-        self.last_update_time = pygame.time.get_ticks()
-        self.frames = frames
-        self.image = self.frames['stop']
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
-        self.flag = True
-
-    def copy(self, pos):
-        return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
-
-    def update(self):
-        current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= self.delay and self.flag:
-            # self.flag = False
-            bullet = Settings.WaterBullet()
-            my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
-            all_bullets.add(my_bullet)
-            self.last_update_time = current_time
-
-
-class Wall(BaseCharacter):
-    def __init__(self, x, y, directory, health, cost, frames):
-        super().__init__(health, x, y, directory)
-        self.cost = cost
-        self.frames = frames
-        self.image = self.frames['stop']
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
-
-    def copy(self, pos):
-        x, y = pos[1], pos[0]
-        return Wall(x, y, self.directory, self.health, self.cost, self.frames)
-
-    def update(self):
-        pass
-
-
-class Generator(BaseCharacter):
-    def __init__(self, x, y, directory, health, delay, plus_cost, cost, frames):
-        super().__init__(health, x, y, directory)
-        self.delay = delay
-        self.plus_cost = plus_cost
-        self.cost = cost
-        self.last_update_time = pygame.time.get_ticks()
-        self.frames = frames
-        self.image = self.frames['stop']
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
-
-    def copy(self, pos):
-        return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost,
-                         self.frames)
-
-    def update(self):
-        current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= self.delay:
-            self.last_update_time = current_time
-            return self.plus_cost
-        return 0
-
-
-class Enemy(BaseCharacter):
-    def __init__(self, x, y, directory, health, enemy_speed, damage, delay, frames):
-        super().__init__(health, x, y, directory)
-        self.damage = damage
-        self.enemy_speed = enemy_speed
-        self.delay = delay
-        self.frames = frames
-        self.image = self.frames['stop']
-        self.rect = self.image.get_rect()
-        self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
-        self.last_update = pygame.time.get_ticks()
-        self.is_walk = True
-
-    def set_mask(self):
-        self.mask = pygame.mask.from_surface(self.image)
-
-    def get_damage(self):
-        return self.damage
-
-    def update(self):
-        current_time = pygame.time.get_ticks()
-        unit = pygame.sprite.spritecollideany(self, all_units)
-        if unit:
-            if self.is_walk:
-                self.last_update = current_time - self.delay
-            self.is_walk = False
-        else:
-            self.is_walk = True
-        if current_time - self.last_update >= self.delay and not self.is_walk:
-            # боевка
-            damage = self.get_damage()
-            unit.change_health(damage)
-            if not unit.is_alive():
-                all_units.remove(unit)
-                unit.kill()
-                unit.is_deleted = True
-            self.last_update = current_time
-        x, y = self.get_position()
-        if self.is_walk:
-            x -= self.enemy_speed / FPS
-        self.set_position(position=(x, y))
 
 
 class Wave:
@@ -550,7 +223,7 @@ class Game:
         self.is_hold = False
         self.current_unit = None
         # self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
-        self.spawn = Spawn(2, self.wave_delay, self.enemies_for_spawn)
+        self.spawn = Spawn(1, self.wave_delay, self.enemies_for_spawn)
 
     def create_unit(self, pos, unit):
         return unit.copy(pos)
@@ -657,8 +330,8 @@ def main():
     pygame.mouse.set_visible(False)
     clock = pygame.time.Clock()
 
-    background_image = load_image('background.png', DIR_DATA)
-    cursor_image = load_image("cursor.png", "data/cursor")
+    background_image = load_image('background.png', f'{DIR_DATA}/screen')
+    cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor"), (50, 50))
 
     settings = Settings()
 
@@ -683,6 +356,8 @@ def main():
                     running = False
                     game_paused = not game_paused
                     continue
+                if event.key == pygame.K_p:
+                    game_paused = not game_paused
             if event.type == pygame.MOUSEBUTTONDOWN:
                 game.get_click(event.pos, False)
             if event.type == pygame.MOUSEBUTTONUP:
@@ -692,9 +367,9 @@ def main():
                 mouse_coord = event.pos
 
         if not game_paused:
-            screen.blit(background_image, (0, 0))
             game.update()
-            game.render(screen)
+        screen.blit(background_image, (0, 0))
+        game.render(screen)
 
         if pygame.mouse.get_focused():
             screen.blit(cursor_image, mouse_coord)
