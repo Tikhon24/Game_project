@@ -4,7 +4,7 @@ import sys
 import random
 
 from settings import Settings
-from units import Bullet, Turret, Generator, Wall, Enemy
+from units import Bullet, Turret, Generator, Wall, Enemy, Swamp
 from units import all_units, all_bullets, all_enemies
 
 pygame.mixer.init()
@@ -27,6 +27,8 @@ SOUNDS = {
     "death_en": pygame.mixer.Sound('data/sound/death_en.mp3'),
     "death_un": pygame.mixer.Sound('data/sound/death_un.mp3')
 }
+
+settings = Settings()
 
 
 def load_image(name, directory, colorkey=None):
@@ -117,8 +119,8 @@ class Wave:
         self.last_update = pygame.time.get_ticks()
         self.relations_enemies = {
             0: None,
-            1: Settings.Dino,
-            2: Settings.Nail
+            1: settings.Dino,
+            2: settings.Nail
         }
         self.count_of_spawn = 0
 
@@ -211,9 +213,10 @@ class Spawn:
 
 
 class Game:
-    def __init__(self, game_board: GameBoard, shop, settings):
+    def __init__(self, game_board: GameBoard, shop, swamp, settings):
         self.game_board = game_board
         self.shop = shop
+        self.swamp = swamp
         self.settings = settings
         self.total_money = settings.start_money
         self.wave_delay = settings.wave_delay
@@ -242,7 +245,9 @@ class Game:
         pass
 
     def is_lose(self):
-        pass
+        if self.hp <= 0:
+            return True
+        return False
 
     def get_click(self, mouse_pos, up):
         game_board_cell = self.game_board.get_cell(mouse_pos)
@@ -283,6 +288,9 @@ class Game:
             self.is_hold = False
             self.current_unit = None
 
+    def change_hp(self, damage):
+        self.hp -= damage
+
     def update(self):
         self.spawn.update()
         self.game_board.update()
@@ -301,6 +309,10 @@ class Game:
         bullets = all_bullets.sprites()
         for i in range(len(bullets)):
             bullets[i].update()
+
+        damage = self.swamp.update()
+        if damage:
+            self.change_hp(damage)
 
 
 def init_shop(settings: Settings):
@@ -333,13 +345,12 @@ def main():
     background_image = load_image('background.png', f'{DIR_DATA}/screen')
     cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor"), (50, 50))
 
-    settings = Settings()
-
     units_for_shop = init_shop(settings)
 
     game_board = GameBoard(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
-    shop = Shop(6, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP, units_for_shop)
-    game = Game(game_board, shop, settings)
+    shop = Shop(3, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP, units_for_shop)
+    swamp = Swamp()
+    game = Game(game_board, shop, swamp, settings)
 
     running = True
     game_paused = False
@@ -372,6 +383,8 @@ def main():
         game.render(screen)
 
         if pygame.mouse.get_focused():
+            if game.is_hold:
+                screen.blit(game.current_unit.image, (mouse_coord[0] - 75, mouse_coord[-1] - 75))
             screen.blit(cursor_image, mouse_coord)
         clock.tick(FPS)
         pygame.display.flip()

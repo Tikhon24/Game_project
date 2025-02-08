@@ -10,6 +10,39 @@ all_bullets = pygame.sprite.Group()
 all_enemies = pygame.sprite.Group()
 all_units = pygame.sprite.Group()
 
+settings = Settings()
+
+
+class Swamp(pygame.sprite.Sprite):
+    x = 0
+    y = TOP_GAME_BOARD
+    size = (270, 750)
+
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface(Swamp.size)
+        self.rect = self.image.get_rect()
+        self.rect.x = Swamp.x
+        self.rect.y = Swamp.y
+
+    def update(self):
+        result = []
+        enemies = pygame.sprite.spritecollide(self, all_enemies, dokill=False)
+        if enemies:
+            for enemy in enemies:
+                enemy.is_finished = True
+                enemy.is_walk = False
+                if enemy.fin_frame == len(enemy.frames['finish']):
+                    result.append(enemy.get_damage())
+                    all_enemies.remove(enemy)
+                    enemy.kill()
+                else:
+                    enemy.image = enemy.frames['finish'][enemy.fin_frame]
+                    enemy.fin_frame += 1
+            if result:
+                return sum(result)
+        return None
+
 
 class BaseCharacter(pygame.sprite.Sprite):
     def __init__(self, health, x, y, directory):
@@ -114,6 +147,10 @@ class Bullet(pygame.sprite.Sprite):
             all_bullets.remove(self)
             self.kill()
 
+        if self.x > 9:
+            all_bullets.remove(self)
+            self.kill()
+
         x, y = self.get_position()
         x += self.bullet_speed / FPS
         self.set_position(position=(x, y))
@@ -130,19 +167,29 @@ class Turret(BaseCharacter):
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
-        self.flag = True
+        self.is_fire = False
+        self.sprite_index = 0
 
     def copy(self, pos):
         return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
 
     def update(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= self.delay and self.flag:
-            # self.flag = False
-            bullet = Settings.WaterBullet()
-            my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
-            all_bullets.add(my_bullet)
-            self.last_update_time = current_time
+        if current_time - self.last_update_time >= self.delay:
+            if not self.is_fire:
+                if self.sprite_index == len(self.frames['atack']):
+                    self.is_fire = True
+                    self.sprite_index = 0
+                else:
+                    self.image = self.frames['atack'][self.sprite_index]
+                    self.sprite_index += 1
+            else:
+                self.image = self.frames['stop']
+                bullet = settings.WaterBullet()
+                my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
+                all_bullets.add(my_bullet)
+                self.last_update_time = current_time
+                self.is_fire = False
 
 
 class Wall(BaseCharacter):
@@ -171,6 +218,8 @@ class Generator(BaseCharacter):
         self.last_update_time = pygame.time.get_ticks()
         self.frames = frames
         self.image = self.frames['stop']
+        self.sprite_index = 0
+        self.is_generate = False
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
 
@@ -179,10 +228,20 @@ class Generator(BaseCharacter):
                          self.frames)
 
     def update(self):
+
         current_time = pygame.time.get_ticks()
         if current_time - self.last_update_time >= self.delay:
-            self.last_update_time = current_time
-            return self.plus_cost
+            if not self.is_generate:
+                if self.sprite_index == len(self.frames['atack']):
+                    self.is_generate = True
+                    self.sprite_index = 0
+                else:
+                    self.image = self.frames['atack'][self.sprite_index]
+                    self.sprite_index += 1
+            else:
+                self.is_generate = False
+                self.last_update_time = current_time
+                return self.plus_cost
         return 0
 
 
@@ -194,10 +253,15 @@ class Enemy(BaseCharacter):
         self.delay = delay
         self.frames = frames
         self.image = self.frames['stop']
+        self.sprite_index = 0
+        self.cur_frame = 0
+        self.fin_frame = 0
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
         self.last_update = pygame.time.get_ticks()
         self.is_walk = True
+        self.is_fire = False
+        self.is_finished = False
 
     def set_mask(self):
         self.mask = pygame.mask.from_surface(self.image)
@@ -214,15 +278,28 @@ class Enemy(BaseCharacter):
             self.is_walk = False
         else:
             self.is_walk = True
+        if self.is_walk:
+            self.cur_frame = (self.cur_frame + 1) % len(self.frames)
+            self.image = self.frames['motion'][self.cur_frame]
         if current_time - self.last_update >= self.delay and not self.is_walk:
-            # боевка
-            damage = self.get_damage()
-            unit.change_health(damage)
-            if not unit.is_alive():
-                all_units.remove(unit)
-                unit.kill()
-                unit.is_deleted = True
-            self.last_update = current_time
+            if not self.is_fire:
+                if self.sprite_index == len(self.frames['atack']):
+                    self.is_fire = True
+                    self.sprite_index = 0
+                else:
+                    self.image = self.frames['atack'][self.sprite_index]
+                    self.sprite_index += 1
+            else:
+                # боевка
+                self.is_fire = False
+                damage = self.get_damage()
+                unit.change_health(damage)
+                if not unit.is_alive():
+                    all_units.remove(unit)
+                    unit.kill()
+                    unit.is_deleted = True
+                self.last_update = current_time
+
         x, y = self.get_position()
         if self.is_walk:
             x -= self.enemy_speed / FPS

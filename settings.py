@@ -52,7 +52,10 @@ class Settings:
             self.delay = 5000
             self.cost = 100
             self.frames = {
-                'atack': [],
+                'atack': [
+                    pygame.transform.scale(load_image(f'Shape{i}.png', 'data/shape'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                    for i in range(11)
+                ],
                 'motion': [],
                 'die': [],
                 'stop': pygame.transform.scale(load_image("Shape0.png", "data/shape"),
@@ -78,11 +81,14 @@ class Settings:
             self.directory = 'generator'
             self.health = 5
             # self.delay = 10000
-            self.delay = 100
+            self.delay = 3000
             self.cost = 50
             self.plus_cost = 25
             self.frames = {
-                'atack': [],
+                'atack': [
+                    pygame.transform.scale(load_image(f'Rustik{i}.png', 'data/rustik'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                    for i in range(10)
+                ],
                 'motion': [],
                 'die': [],
                 'stop': pygame.transform.scale(load_image("Rustik0.png", "data/rustik"),
@@ -93,7 +99,7 @@ class Settings:
         def __init__(self):
             self.directory = 'wall'
             self.health = 8
-            self.cost = 50
+            self.cost = 70
             self.frames = {
                 'stop': pygame.transform.scale(load_image("Aqueduct.png", "data/aqueduct"),
                                                (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
@@ -105,15 +111,21 @@ class Settings:
             self.health = 5
             self.damage = 1
             self.delay = 3000
-            self.speed = 0.2
+            self.speed = 0.21
             self.frames = {
                 'atack': [
-                    pygame.transform.scale(load_image(f'Bul{i}.png', 'data/bullet'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-                    for i in range(11)
+                    pygame.transform.scale(load_image(f'Dinoattack{i}.png', 'data/dino/atack'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                    for i in range(9)
                 ],
-                'motion': [],
+                'motion': [
+                    pygame.transform.scale(load_image(f'Dino{i}.png', 'data/dino/motion'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                    for i in range(9)
+                ],
                 'die': [],
-                'finish': [],
+                'finish': [
+                    pygame.transform.scale(load_image(f'DinoWin{i}.png', 'data/dino/finish'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                    for i in range(9)
+                ],
                 'stop': pygame.transform.scale(load_image('dino.png', 'data/dino'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
 
@@ -123,11 +135,20 @@ class Settings:
             self.health = 10
             self.damage = 2
             self.delay = 4000
-            self.speed = 0.15
+            self.speed = 0.18
             self.frames = {
-                'atack': [],
-                'motion': [],
+                'atack': [
+                    pygame.transform.scale(load_image(f'NailAtk{i + 1}.png', 'data/nail/atack'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                    for i in range(10)
+                ],
+                'motion': [
+                    pygame.transform.scale(load_image(f'NailWalk{i + 1}.png', 'data/nail/motion'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                    for i in range(10)
+                ],
                 'die': [],
-                'finish': [],
+                'finish': [
+                    pygame.transform.scale(load_image(f'NailWin{i + 1}.png', 'data/nail/finish'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
+                    for i in range(10)
+                ],
                 'stop': pygame.transform.scale(load_image('Nail0.png', 'data/nail'), (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
             }
