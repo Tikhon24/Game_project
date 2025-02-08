@@ -22,10 +22,7 @@ TOP_SHOP = 37
 FPS = 30
 SOUNDS = {
     "shopping": pygame.mixer.Sound('data/sound/shopping.mp3'),
-    "ban": pygame.mixer.Sound('data/sound/ban.mp3'),
-    "shot": pygame.mixer.Sound('data/sound/shot.mp3'),
-    "death_en": pygame.mixer.Sound('data/sound/death_en.mp3'),
-    "death_un": pygame.mixer.Sound('data/sound/death_un.mp3')
+    "ban": pygame.mixer.Sound('data/sound/ban.mp3')
 }
 
 settings = Settings()

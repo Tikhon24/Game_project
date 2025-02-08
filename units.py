@@ -12,6 +12,13 @@ all_units = pygame.sprite.Group()
 
 settings = Settings()
 
+pygame.mixer.init()
+SOUNDS = {
+    "shot": pygame.mixer.Sound('data/sound/shot.mp3'),
+    "death_en": pygame.mixer.Sound('data/sound/death_en.mp3'),
+    "death_un": pygame.mixer.Sound('data/sound/death_un.mp3')
+}
+
 
 class Swamp(pygame.sprite.Sprite):
     x = 0
@@ -144,6 +151,7 @@ class Bullet(pygame.sprite.Sprite):
             if not enemy.is_alive():
                 all_enemies.remove(enemy)
                 enemy.kill()
+                SOUNDS['death_en'].play()
             all_bullets.remove(self)
             self.kill()
 
@@ -188,6 +196,7 @@ class Turret(BaseCharacter):
                 bullet = settings.WaterBullet()
                 my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
                 all_bullets.add(my_bullet)
+                SOUNDS['shot'].play()
                 self.last_update_time = current_time
                 self.is_fire = False
 
@@ -298,6 +307,7 @@ class Enemy(BaseCharacter):
                     all_units.remove(unit)
                     unit.kill()
                     unit.is_deleted = True
+                    SOUNDS['death_un'].play()
                 self.last_update = current_time
 
         x, y = self.get_position()
