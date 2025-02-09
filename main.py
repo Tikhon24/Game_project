@@ -384,6 +384,11 @@ def main():
 
         if game_paused:
             screen.blit(pause_image, (0, 0))
+            for enemy in all_enemies:
+                enemy.last_update += 1000 / clock.get_fps()
+            for unit in all_units:
+                if not isinstance(unit, Wall):
+                    unit.last_update += 1000 / clock.get_fps()
 
         # fps
         font = pygame.font.SysFont('Arial', 24)

@@ -155,7 +155,7 @@ class Bullet(pygame.sprite.Sprite):
             all_bullets.remove(self)
             self.kill()
 
-        if self.x > 9:
+        if self.x > 8.5:
             all_bullets.remove(self)
             self.kill()
 
@@ -170,7 +170,7 @@ class Turret(BaseCharacter):
         self.delay = delay
         self.cost = cost
         self.bullet = bullet
-        self.last_update_time = pygame.time.get_ticks()
+        self.last_update = pygame.time.get_ticks()
         self.frames = frames
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
@@ -183,7 +183,7 @@ class Turret(BaseCharacter):
 
     def update(self):
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= self.delay:
+        if current_time - self.last_update >= self.delay:
             if not self.is_fire:
                 if self.sprite_index == len(self.frames['atack']):
                     self.is_fire = True
@@ -197,7 +197,7 @@ class Turret(BaseCharacter):
                 my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
                 all_bullets.add(my_bullet)
                 SOUNDS['shot'].play()
-                self.last_update_time = current_time
+                self.last_update = current_time
                 self.is_fire = False
 
 
@@ -224,7 +224,7 @@ class Generator(BaseCharacter):
         self.delay = delay
         self.plus_cost = plus_cost
         self.cost = cost
-        self.last_update_time = pygame.time.get_ticks()
+        self.last_update = pygame.time.get_ticks()
         self.frames = frames
         self.image = self.frames['stop']
         self.sprite_index = 0
@@ -239,7 +239,7 @@ class Generator(BaseCharacter):
     def update(self):
 
         current_time = pygame.time.get_ticks()
-        if current_time - self.last_update_time >= self.delay:
+        if current_time - self.last_update >= self.delay:
             if not self.is_generate:
                 if self.sprite_index == len(self.frames['atack']):
                     self.is_generate = True
@@ -250,7 +250,7 @@ class Generator(BaseCharacter):
             else:
                 self.image = self.frames['stop']
                 self.is_generate = False
-                self.last_update_time = current_time
+                self.last_update = current_time
                 return self.plus_cost
         return 0
 
