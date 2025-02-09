@@ -341,7 +341,7 @@ def main():
 
     background_image = load_image('background.png', f'{DIR_DATA}/screen').convert_alpha()
     pause_image = load_image('pause.png', f'{DIR_DATA}/screen').convert_alpha()
-    cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor"), (50, 50))
+    cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor").convert_alpha(), (50, 50))
 
     units_for_shop = init_shop(settings)
 
