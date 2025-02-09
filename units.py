@@ -27,7 +27,7 @@ class Swamp(pygame.sprite.Sprite):
 
     def __init__(self):
         super().__init__()
-        self.image = pygame.Surface(Swamp.size)
+        self.image = pygame.Surface(Swamp.size).convert_alpha()
         self.rect = self.image.get_rect()
         self.rect.x = Swamp.x
         self.rect.y = Swamp.y

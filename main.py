@@ -339,8 +339,8 @@ def main():
     pygame.mouse.set_visible(False)
     clock = pygame.time.Clock()
 
-    background_image = load_image('background.png', f'{DIR_DATA}/screen')
-    pause_image = load_image('pause.png', f'{DIR_DATA}/screen')
+    background_image = load_image('background.png', f'{DIR_DATA}/screen').convert_alpha()
+    pause_image = load_image('pause.png', f'{DIR_DATA}/screen').convert_alpha()
     cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor"), (50, 50))
 
     units_for_shop = init_shop(settings)
@@ -389,6 +389,7 @@ def main():
         font = pygame.font.SysFont('Arial', 24)
         fps_text = font.render(f"FPS: {int(clock.get_fps())}", True, (255, 255, 255))
         screen.blit(fps_text, (10, 10))
+
         if pygame.mouse.get_focused():
             if game.is_hold:
                 screen.blit(game.current_unit.image, (mouse_coord[0] - 75, mouse_coord[-1] - 75))
