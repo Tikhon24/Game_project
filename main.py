@@ -111,7 +111,6 @@ class Wave:
         self.counter = wave_counter
         self.delay = delay
         self.enemy_matrix = enemy_matrix
-        self.current_enemies = []
         self.id = 0
         self.last_update = pygame.time.get_ticks()
         self.relations_enemies = {
@@ -148,10 +147,6 @@ class Wave:
                             self.create_enemy(self.relations_enemies[id], pos=(x, y))
             self.last_update = current_time
 
-    def render(self, screen):
-        for enemy in self.current_enemies:
-            enemy.render(screen)
-
 
 class Spawn:
     def __init__(self, wave_counter, delay, enemies):
@@ -160,7 +155,6 @@ class Spawn:
         self.delay = delay
         self.last_update = pygame.time.get_ticks()
         self.enemies = enemies
-        self.current_enemies = []
         # self.wave = Wave(self.wave_counter, 10000, None)
         self.wave = Wave(self.wave_counter, 10000, self.waves_dict[self.get_wave_counter()])
 
