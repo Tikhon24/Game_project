@@ -340,6 +340,7 @@ def main():
     clock = pygame.time.Clock()
 
     background_image = load_image('background.png', f'{DIR_DATA}/screen')
+    pause_image = load_image('pause.png', f'{DIR_DATA}/screen')
     cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor"), (50, 50))
 
     units_for_shop = init_shop(settings)
@@ -367,17 +368,21 @@ def main():
                 if event.key == pygame.K_p:
                     game_paused = not game_paused
             if event.type == pygame.MOUSEBUTTONDOWN:
-                game.get_click(event.pos, False)
+                if not game_paused:
+                    game.get_click(event.pos, False)
             if event.type == pygame.MOUSEBUTTONUP:
-                game.get_click(event.pos, True)
+                if not game_paused:
+                    game.get_click(event.pos, True)
             if event.type == pygame.MOUSEMOTION:
                 # добавить рамку в магазин
-                mouse_coord = event.pos
+                    mouse_coord = event.pos
 
         if not game_paused:
             game.update()
         screen.blit(background_image, (0, 0))
         game.render(screen)
+        if game_paused:
+            screen.blit(pause_image, (0, 0))
 
         if pygame.mouse.get_focused():
             if game.is_hold:
