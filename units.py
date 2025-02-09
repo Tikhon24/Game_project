@@ -248,6 +248,7 @@ class Generator(BaseCharacter):
                     self.image = self.frames['atack'][self.sprite_index]
                     self.sprite_index += 1
             else:
+                self.image = self.frames['stop']
                 self.is_generate = False
                 self.last_update_time = current_time
                 return self.plus_cost

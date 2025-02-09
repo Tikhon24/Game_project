@@ -378,6 +378,10 @@ def main():
             game.update()
         screen.blit(background_image, (0, 0))
         game.render(screen)
+        # fps
+        font = pygame.font.SysFont('Arial', 24)
+        fps_text = font.render(f"FPS: {int(clock.get_fps())}", True, (255, 255, 255))
+        screen.blit(fps_text, (10, 10))
 
         if pygame.mouse.get_focused():
             if game.is_hold:
