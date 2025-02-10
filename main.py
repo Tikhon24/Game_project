@@ -48,6 +48,43 @@ def terminate():
     pygame.quit()
     sys.exit()
 
+def start_screen(screen, clock):
+    menu = load_image('menu.png', f'{DIR_DATA}/screen').convert_alpha()
+    cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor").convert_alpha(), (50, 50))
+    screen.blit(menu, (0, 0))
+
+    mouse_coord = (0, 0)
+
+    while True:
+        screen.blit(menu, (0, 0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEMOTION:
+                mouse_coord = event.pos
+            # -=-------------------=BUTTONS=-------------------=-
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = event.pos
+                # play
+                if 110 <= pos[0] <= 430 and 70 <= pos[1] <= 240:
+                    # start game
+                    return mouse_coord
+                # credits
+                if 90 <= pos[0] <= 420 and 260 <= pos[1] <= 380:
+                    pass
+                # soon
+                if 78 <= pos[0] <= 425 and 410 <= pos[1] <= 565:
+                    pass
+                # exit
+                if 68 <= pos[0] <= 428 and 596 <= pos[1] <= 745:
+                    terminate()
+            # -=-----------------------------------------------=-
+
+        if pygame.mouse.get_focused():
+            screen.blit(cursor_image, mouse_coord)
+
+        clock.tick(FPS)
+        pygame.display.flip()
 
 class Board:
     # создание поля
@@ -332,9 +369,10 @@ def main():
     pygame.display.set_caption('АТЕ')
     pygame.mouse.set_visible(False)
     clock = pygame.time.Clock()
-
     background_image = load_image('background.png', f'{DIR_DATA}/screen').convert_alpha()
-    pause_image = load_image('pause.png', f'{DIR_DATA}/screen').convert_alpha()
+    pauseground_image = load_image('pauseground.png', f'{DIR_DATA}/screen').convert_alpha()
+    pause_btn_image = load_image('pause.png', f'{DIR_DATA}/buttons').convert_alpha()
+    into_menu_btn_image = pygame.transform.scale(load_image('into_menu.png', f'{DIR_DATA}/buttons').convert_alpha(), (75, 75))
     cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor").convert_alpha(), (50, 50))
 
     units_for_shop = init_shop(settings)
@@ -347,7 +385,8 @@ def main():
     running = True
     game_paused = False
 
-    mouse_coord = (0, 0)
+    mouse_coord = start_screen(screen, clock)
+
     # игровой цикл
     while running:
         # обработка событий
@@ -356,8 +395,8 @@ def main():
                 terminate()
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
-                    running = False
-                    game_paused = not game_paused
+                    game_paused = False
+                    mouse_coord = start_screen(screen, clock)
                     continue
                 if event.key == pygame.K_p:
                     game_paused = not game_paused
@@ -365,8 +404,18 @@ def main():
                 if not game_paused:
                     game.get_click(event.pos, False)
             if event.type == pygame.MOUSEBUTTONUP:
-                if not game_paused:
+                pos = event.pos
+                # settings_btn
+                if 15 <= pos[0] <= 90 and 990 <= pos[1] <= 1065:
+                    game_paused = False
+                    mouse_coord = start_screen(screen, clock)
+                    continue
+                elif not game_paused:
                     game.get_click(event.pos, True)
+                else:
+                    if 885 <= pos[0] <= 1035 and 465 <= pos[1] <= 615:
+                        game_paused = not game_paused
+
             if event.type == pygame.MOUSEMOTION:
                 # добавить рамку в магазин
                 mouse_coord = event.pos
@@ -374,10 +423,15 @@ def main():
         if not game_paused:
             game.update()
         screen.blit(background_image, (0, 0))
+        screen.blit(into_menu_btn_image, (15, 990))
         game.render(screen)
 
         if game_paused:
-            screen.blit(pause_image, (0, 0))
+            screen.blit(pauseground_image, (0, 0))
+            screen.blit(pause_btn_image, (885, 465))
+            screen.blit(into_menu_btn_image, (15, 990))
+            game.is_hold = False
+            game.current_unit = None
             for enemy in all_enemies:
                 enemy.last_update += 1000 / clock.get_fps()
             for unit in all_units:
