@@ -19,13 +19,20 @@ LEFT_GAME_BOARD = 541
 TOP_GAME_BOARD = 251
 LEFT_SHOP = 845
 TOP_SHOP = 37
-FPS = 30
+FPS = 60
 SOUNDS = {
     "shopping": pygame.mixer.Sound('data/sound/shopping.mp3'),
     "ban": pygame.mixer.Sound('data/sound/ban.mp3')
 }
 
 settings = Settings()
+
+STATISTICS = {
+    'enemy_killed': 0,
+    'unit_killed': 0,
+    'time': 0,
+    'money': 0
+}
 
 
 def load_image(name, directory, colorkey=None):
@@ -152,8 +159,8 @@ class Wave:
         self.last_update = pygame.time.get_ticks()
         self.relations_enemies = {
             0: None,
-            1: settings.Dino,
-            2: settings.Nail
+            1: settings.enemy_relation['dino'],
+            2: settings.enemy_relation['nail']
         }
         self.count_of_spawn = 0
 
@@ -164,7 +171,7 @@ class Wave:
         pass
 
     def create_enemy(self, enemy_type, pos):
-        params = enemy_type()
+        params = enemy_type
         x, y = pos
         all_enemies.add(
             Enemy(x, y, params.directory, params.health, params.speed, params.damage, params.delay, params.frames))
@@ -323,9 +330,7 @@ class Game:
         self.spawn.update()
         self.game_board.update()
 
-        enemies = all_enemies.sprites()
-        for i in range(len(enemies)):
-            enemies[i].update()
+        all_enemies.update()
 
         units = all_units.sprites()
         for i in range(len(units)):
@@ -334,9 +339,7 @@ class Game:
             else:
                 units[i].update()
 
-        bullets = all_bullets.sprites()
-        for i in range(len(bullets)):
-            bullets[i].update()
+        all_bullets.update()
 
         damage = self.swamp.update()
         if damage:
@@ -376,6 +379,11 @@ def main():
     cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor").convert_alpha(), (50, 50))
 
     units_for_shop = init_shop(settings)
+    # загрузка спрайтов врагов
+    settings.enemy_relation = {
+        'dino': settings.Dino(),
+        'nail': settings.Nail()
+    }
 
     game_board = GameBoard(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
     shop = Shop(3, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP, units_for_shop)
