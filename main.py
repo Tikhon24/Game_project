@@ -60,8 +60,10 @@ class Statistics:
         self.data['all_unit_killed'] += 1
 
     def up_time(self, time):
-        self.data['time'] += time - self.data['time']
-        self.data['all_time'] += time - self.data['time']
+        current_time = self.data['time']
+        new_time = time - current_time
+        self.data['time'] += new_time
+        self.data['all_time'] += new_time
 
     def up_money(self, money):
         self.data['money'] += money
