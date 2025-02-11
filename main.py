@@ -1,3 +1,5 @@
+import json
+
 import pygame
 import os
 import sys
@@ -15,6 +17,7 @@ MAX_WAVE = 20
 TILE_SIZE_BOARD = 150
 TILE_SIZE_SHOP = 145
 DIR_DATA = 'data'
+SCORE = f'{DIR_DATA}/score/score.json'
 LEFT_GAME_BOARD = 541
 TOP_GAME_BOARD = 251
 LEFT_SHOP = 845
@@ -27,12 +30,42 @@ SOUNDS = {
 
 settings = Settings()
 
-STATISTICS = {
-    'enemy_killed': 0,
-    'unit_killed': 0,
-    'time': 0,
-    'money': 0
-}
+class Statistics:
+    def __init__(self):
+        self.data = self.load_score(SCORE)
+
+    def load_score(self, filename):
+        with open(filename, 'r') as file:
+            return json.load(file)
+
+    def get_data(self):
+        return self.data
+
+    def clean_current_data(self):
+        # очистка сессионных значений, не трогаем значения за всё время
+        for key in ['enemy_killed', 'unit_killed', 'time', 'money']:
+            self.data[key] = 0
+
+    def upload_score(self, filename):
+        self.clean_current_data()
+        with open(filename, 'w') as file:
+            json.dump(self.get_data(), file)
+
+    def up_enemy_killed(self):
+        self.data['enemy_killed'] += 1
+        self.data['all_enemy_killed'] += 1
+
+    def up_unit_killed(self):
+        self.data['unit_killed'] += 1
+        self.data['all_unit_killed'] += 1
+
+    def up_time(self, time):
+        self.data['time'] += time - self.data['time']
+        self.data['all_time'] += time - self.data['time']
+
+    def up_money(self, money):
+        self.data['money'] += money
+        self.data['all_money'] += money
 
 
 def load_image(name, directory, colorkey=None):
