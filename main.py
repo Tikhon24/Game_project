@@ -505,6 +505,7 @@ def main():
                 screen.blit(game.current_unit.image, (mouse_coord[0] - 75, mouse_coord[-1] - 75))
             screen.blit(cursor_image, mouse_coord)
         clock.tick(FPS)
+        statistics.up_time(pygame.time.get_ticks())
         pygame.display.flip()
 
 
