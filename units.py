@@ -52,12 +52,13 @@ class Swamp(pygame.sprite.Sprite):
 
 
 class BaseCharacter(pygame.sprite.Sprite):
-    def __init__(self, health, x, y, directory):
+    def __init__(self, health, x, y, directory, statistics):
         super().__init__()
         self.health = health
         self.x = x
         self.y = y
         self.directory = directory
+        self.statistics = statistics
         self.is_deleted = False
 
     def change_health(self, damage):
@@ -95,7 +96,7 @@ class BaseCharacter(pygame.sprite.Sprite):
 
 
 class Bullet(pygame.sprite.Sprite):
-    def __init__(self, x, y, directory, bullet_speed, bullet_damage, frames):
+    def __init__(self, x, y, directory, bullet_speed, bullet_damage, frames, statistics):
         super().__init__(all_bullets)
         self.bullet_damage = bullet_damage
         self.bullet_speed = bullet_speed
@@ -107,6 +108,7 @@ class Bullet(pygame.sprite.Sprite):
         self.image = self.frames['stop']
         self.rect = self.image.get_rect()
         self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
+        self.statistics = statistics
 
     def kill(self):
         del self
@@ -147,11 +149,12 @@ class Bullet(pygame.sprite.Sprite):
         if enemy:
             damage = self.get_bullet_damage()
             enemy.change_health(damage)
-            # удаление объектов, если они больше не являются частью игры
+            # удаление объектов, если они больше не являются частью игры, убийство врага
             if not enemy.is_alive():
                 all_enemies.remove(enemy)
                 enemy.kill()
                 SOUNDS['death_en'].play()
+                self.statistics.up_enemy_killed()
             all_bullets.remove(self)
             self.kill()
 
@@ -165,8 +168,8 @@ class Bullet(pygame.sprite.Sprite):
 
 
 class Turret(BaseCharacter):
-    def __init__(self, x, y, directory, cost, health, delay, bullet, frames):
-        super().__init__(health, x, y, directory)
+    def __init__(self, x, y, directory, cost, health, delay, bullet, frames, statistics):
+        super().__init__(health, x, y, directory, statistics)
         self.delay = delay
         self.cost = cost
         self.bullet = bullet
@@ -177,9 +180,11 @@ class Turret(BaseCharacter):
         self.rect.x, self.rect.y = LEFT_GAME_BOARD + self.x * TILE_SIZE_BOARD, TOP_GAME_BOARD + self.y * TILE_SIZE_BOARD
         self.is_fire = False
         self.sprite_index = 0
+        self.bullet_settings = settings.WaterBullet()
 
     def copy(self, pos):
-        return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames)
+        return Turret(pos[1], pos[0], self.directory, self.cost, self.health, self.delay, self.bullet, self.frames,
+                      self.statistics)
 
     def update(self):
         current_time = pygame.time.get_ticks()
@@ -193,17 +198,18 @@ class Turret(BaseCharacter):
                     self.sprite_index += 1
             else:
                 self.image = self.frames['stop']
-                bullet = settings.WaterBullet()
-                my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames)
-                all_bullets.add(my_bullet)
+                bullet = self.bullet_settings
+                my_bullet = self.bullet(self.x, self.y, bullet.directory, bullet.speed, bullet.damage, bullet.frames,
+                                        self.statistics)
+                # all_bullets.add(my_bullet)
                 SOUNDS['shot'].play()
                 self.last_update = current_time
                 self.is_fire = False
 
 
 class Wall(BaseCharacter):
-    def __init__(self, x, y, directory, health, cost, frames):
-        super().__init__(health, x, y, directory)
+    def __init__(self, x, y, directory, health, cost, frames, statistics):
+        super().__init__(health, x, y, directory, statistics)
         self.cost = cost
         self.frames = frames
         self.image = self.frames['stop']
@@ -212,15 +218,15 @@ class Wall(BaseCharacter):
 
     def copy(self, pos):
         x, y = pos[1], pos[0]
-        return Wall(x, y, self.directory, self.health, self.cost, self.frames)
+        return Wall(x, y, self.directory, self.health, self.cost, self.frames, self.statistics)
 
     def update(self):
         pass
 
 
 class Generator(BaseCharacter):
-    def __init__(self, x, y, directory, health, delay, plus_cost, cost, frames):
-        super().__init__(health, x, y, directory)
+    def __init__(self, x, y, directory, health, delay, plus_cost, cost, frames, statistics):
+        super().__init__(health, x, y, directory, statistics)
         self.delay = delay
         self.plus_cost = plus_cost
         self.cost = cost
@@ -234,7 +240,7 @@ class Generator(BaseCharacter):
 
     def copy(self, pos):
         return Generator(pos[1], pos[0], self.directory, self.health, self.delay, self.plus_cost, self.cost,
-                         self.frames)
+                         self.frames, self.statistics)
 
     def update(self):
 
@@ -256,8 +262,8 @@ class Generator(BaseCharacter):
 
 
 class Enemy(BaseCharacter):
-    def __init__(self, x, y, directory, health, enemy_speed, damage, delay, frames):
-        super().__init__(health, x, y, directory)
+    def __init__(self, x, y, directory, health, enemy_speed, damage, delay, frames, statistics):
+        super().__init__(health, x, y, directory, statistics)
         self.damage = damage
         self.enemy_speed = enemy_speed
         self.delay = delay
@@ -309,6 +315,7 @@ class Enemy(BaseCharacter):
                     unit.kill()
                     unit.is_deleted = True
                     SOUNDS['death_un'].play()
+                    self.statistics.up_unit_killed()
                 self.last_update = current_time
 
         x, y = self.get_position()

@@ -30,6 +30,7 @@ SOUNDS = {
 
 settings = Settings()
 
+
 class Statistics:
     def __init__(self):
         self.data = self.load_score(SCORE)
@@ -70,6 +71,9 @@ class Statistics:
         self.data['all_money'] += money
 
 
+statistics = Statistics()
+
+
 def load_image(name, directory, colorkey=None):
     fullname = os.path.join(directory, name)
     # если файл не существует, то выходим
@@ -87,8 +91,10 @@ def render_text(screen, text, font_size, coords):
 
 
 def terminate():
+    statistics.upload_score(SCORE)
     pygame.quit()
     sys.exit()
+
 
 def start_screen(screen, clock):
     menu = load_image('menu.png', f'{DIR_DATA}/screen').convert_alpha()
@@ -127,6 +133,7 @@ def start_screen(screen, clock):
 
         clock.tick(FPS)
         pygame.display.flip()
+
 
 class Board:
     # создание поля
@@ -186,10 +193,11 @@ class Shop(Board):
 
 
 class Wave:
-    def __init__(self, wave_counter, delay, enemy_matrix):
+    def __init__(self, wave_counter, delay, enemy_matrix, statistics):
         self.counter = wave_counter
         self.delay = delay
         self.enemy_matrix = enemy_matrix
+        self.statistics = statistics
         self.id = 0
         self.last_update = pygame.time.get_ticks()
         self.relations_enemies = {
@@ -209,7 +217,8 @@ class Wave:
         params = enemy_type
         x, y = pos
         all_enemies.add(
-            Enemy(x, y, params.directory, params.health, params.speed, params.damage, params.delay, params.frames))
+            Enemy(x, y, params.directory, params.health, params.speed, params.damage, params.delay, params.frames,
+                  self.statistics))
 
     def update(self):
         current_time = pygame.time.get_ticks()
@@ -228,14 +237,15 @@ class Wave:
 
 
 class Spawn:
-    def __init__(self, wave_counter, delay, enemies):
+    def __init__(self, wave_counter, delay, enemies, statistics):
         self.wave_counter = wave_counter
         self.waves_dict = {i: self.generate_wave_matrix(i, enemies[i]) for i in range(1, 21)}
         self.delay = delay
         self.last_update = pygame.time.get_ticks()
         self.enemies = enemies
+        self.statistics = statistics
         # self.wave = Wave(self.wave_counter, 10000, None)
-        self.wave = Wave(self.wave_counter, 10000, self.waves_dict[self.get_wave_counter()])
+        self.wave = Wave(self.wave_counter, 10000, self.waves_dict[self.get_wave_counter()], self.statistics)
 
     def get_wave_counter(self):
         return self.wave_counter
@@ -250,7 +260,7 @@ class Spawn:
             self.set_wave_counter(self.get_wave_counter() + 1)
             self.wave.finish_wave()
             enemy_matrix = self.waves_dict[self.get_wave_counter()]
-            self.wave = Wave(self.get_wave_counter(), 10000, enemy_matrix)
+            self.wave = Wave(self.get_wave_counter(), 10000, enemy_matrix, self.statistics)
             self.last_update = current_time
         self.wave.update()
 
@@ -283,11 +293,12 @@ class Spawn:
 
 
 class Game:
-    def __init__(self, game_board: GameBoard, shop, swamp, settings):
+    def __init__(self, game_board: GameBoard, shop, swamp, settings, statistics):
         self.game_board = game_board
         self.shop = shop
         self.swamp = swamp
         self.settings = settings
+        self.statistics = statistics
         self.total_money = settings.start_money
         self.wave_delay = settings.wave_delay
         self.enemies_for_spawn = settings.enemies_for_waves
@@ -296,7 +307,7 @@ class Game:
         self.is_hold = False
         self.current_unit = None
         # self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
-        self.spawn = Spawn(1, self.wave_delay, self.enemies_for_spawn)
+        self.spawn = Spawn(1, self.wave_delay, self.enemies_for_spawn, self.statistics)
 
     def create_unit(self, pos, unit):
         return unit.copy(pos)
@@ -370,7 +381,9 @@ class Game:
         units = all_units.sprites()
         for i in range(len(units)):
             if isinstance(units[i], Generator):
-                self.total_money += units[i].update()
+                plus_money = units[i].update()
+                self.total_money += plus_money
+                self.statistics.up_money(plus_money)
             else:
                 units[i].update()
 
@@ -381,19 +394,19 @@ class Game:
             self.change_hp(damage)
 
 
-def init_shop(settings: Settings):
+def init_shop(settings: Settings, statistics):
     result = []
 
     gen = settings.Generator()
-    generator = Generator(0, 0, gen.directory, gen.health, gen.delay, gen.plus_cost, gen.cost, gen.frames)
+    generator = Generator(0, 0, gen.directory, gen.health, gen.delay, gen.plus_cost, gen.cost, gen.frames, statistics)
     result.append(generator)
 
     wt = settings.WaterTurret()
-    watter_turret = Turret(1, 0, wt.directory, wt.cost, wt.health, wt.delay, Bullet, wt.frames)
+    watter_turret = Turret(1, 0, wt.directory, wt.cost, wt.health, wt.delay, Bullet, wt.frames, statistics)
     result.append(watter_turret)
 
     wll = settings.Wall()
-    wall = Wall(2, 0, wll.directory, wll.health, wll.cost, wll.frames)
+    wall = Wall(2, 0, wll.directory, wll.health, wll.cost, wll.frames, statistics)
     result.append(wall)
 
     return result
@@ -410,10 +423,11 @@ def main():
     background_image = load_image('background.png', f'{DIR_DATA}/screen').convert_alpha()
     pauseground_image = load_image('pauseground.png', f'{DIR_DATA}/screen').convert_alpha()
     pause_btn_image = load_image('pause.png', f'{DIR_DATA}/buttons').convert_alpha()
-    into_menu_btn_image = pygame.transform.scale(load_image('into_menu.png', f'{DIR_DATA}/buttons').convert_alpha(), (75, 75))
+    into_menu_btn_image = pygame.transform.scale(load_image('into_menu.png', f'{DIR_DATA}/buttons').convert_alpha(),
+                                                 (75, 75))
     cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor").convert_alpha(), (50, 50))
 
-    units_for_shop = init_shop(settings)
+    units_for_shop = init_shop(settings, statistics)
     # загрузка спрайтов врагов
     settings.enemy_relation = {
         'dino': settings.Dino(),
@@ -423,7 +437,7 @@ def main():
     game_board = GameBoard(9, 5, LEFT_GAME_BOARD, TOP_GAME_BOARD, TILE_SIZE_BOARD)
     shop = Shop(3, 1, LEFT_SHOP, TOP_SHOP, TILE_SIZE_SHOP, units_for_shop)
     swamp = Swamp()
-    game = Game(game_board, shop, swamp, settings)
+    game = Game(game_board, shop, swamp, settings, statistics)
 
     running = True
     game_paused = False
