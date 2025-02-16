@@ -368,7 +368,7 @@ class Game:
         render_text(screen, self.hp, 48, (95, 15))
 
     def is_win(self):
-        if self.spawn.wave_counter == 21:
+        if self.spawn.wave_counter == 21 and len(all_enemies) == 0:
             return True
         return False
 
