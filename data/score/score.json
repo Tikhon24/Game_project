@@ -1,1 +1,10 @@
-{"enemy_killed": 0, "all_enemy_killed": 0, "unit_killed": 0, "all_unit_killed": 0, "time": 0, "all_time": 52927, "money": 0, "all_money": 0}
+{
+  "enemy_killed": 0,
+  "all_enemy_killed": 0,
+  "unit_killed": 0,
+  "all_unit_killed": 0,
+  "time": 0,
+  "all_time": 0,
+  "money": 0,
+  "all_money": 0
+}

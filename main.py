@@ -163,7 +163,7 @@ def finsh_screen(screen, clock, is_win):
 
         # -=---------------------------------=STATISTIC=---------------------------------=-
         stat = statistics.get_data()
-        render_text(screen, stat["time"], 32, (1797, 620), color)
+        render_text(screen, stat["time"] // 60000, 32, (1797, 620), color)
         render_text(screen, stat["enemy_killed"], 32, (1795, 722), color)
         render_text(screen, stat["unit_killed"], 32, (1795, 840), color)
         render_text(screen, stat["money"], 32, (1795, 965), color)
@@ -350,9 +350,8 @@ class Game:
         self.wave_counter = 0
         self.is_hold = False
         self.current_unit = None
-        # self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
-        self.spawn = Spawn(1, self.wave_delay, self.enemies_for_spawn, self.statistics)
-
+        self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn, self.statistics)
+        # self.spawn = Spawn(20, self.wave_delay, self.enemies_for_spawn, self.statistics)
 
     def create_unit(self, pos, unit):
         return unit.copy(pos)

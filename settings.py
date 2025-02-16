@@ -19,7 +19,7 @@ class Settings:
     """Игровые настройки"""
 
     def __init__(self):
-        self.start_money = 100
+        self.start_money = 10000
         self.hp = 20
         self.wave_delay = 120000
         self.enemies_for_waves = {
@@ -82,8 +82,7 @@ class Settings:
         def __init__(self):
             self.directory = 'generator'
             self.health = 5
-            # self.delay = 10000
-            self.delay = 3000
+            self.delay = 17000
             self.cost = 50
             self.plus_cost = 25
             self.frames = {
@@ -101,7 +100,7 @@ class Settings:
     class Wall:
         def __init__(self):
             self.directory = 'wall'
-            self.health = 8
+            self.health = 12
             self.cost = 70
             self.frames = {
                 'stop': pygame.transform.scale(load_image("Aqueduct.png", "data/aqueduct").convert_alpha(),
@@ -122,9 +121,9 @@ class Settings:
                     for i in range(9)
                 ],
                 'motion': [
-                    pygame.transform.scale(load_image(f'Dino{i}.png', 'data/dino/motion').convert_alpha(),
+                    pygame.transform.scale(load_image(f'Dino{i + 1}.png', 'data/dino/motion').convert_alpha(),
                                            (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-                    for i in range(30)
+                    for i in range(29)
                 ],
                 'die': [],
                 'finish': [
