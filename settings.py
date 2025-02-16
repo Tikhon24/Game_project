@@ -19,7 +19,7 @@ class Settings:
     """Игровые настройки"""
 
     def __init__(self):
-        self.start_money = 10000
+        self.start_money = 100
         self.hp = 20
         self.wave_delay = 120000
         self.enemies_for_waves = {
@@ -82,7 +82,7 @@ class Settings:
         def __init__(self):
             self.directory = 'generator'
             self.health = 5
-            self.delay = 17000
+            self.delay = 20000
             self.cost = 50
             self.plus_cost = 25
             self.frames = {

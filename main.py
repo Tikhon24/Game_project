@@ -286,8 +286,8 @@ class Spawn:
         self.last_update = pygame.time.get_ticks()
         self.enemies = enemies
         self.statistics = statistics
-        # self.wave = Wave(self.wave_counter, 10000, None)
-        self.wave = Wave(self.wave_counter, 10000, self.waves_dict[self.get_wave_counter()], self.statistics)
+        self.wave = Wave(self.wave_counter, 10000, None, self.statistics)
+        # self.wave = Wave(self.wave_counter, 10000, self.waves_dict[self.get_wave_counter()], self.statistics)
 
     def get_wave_counter(self):
         return self.wave_counter
