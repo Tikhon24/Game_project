@@ -124,7 +124,7 @@ class Settings:
                 'motion': [
                     pygame.transform.scale(load_image(f'Dino{i}.png', 'data/dino/motion').convert_alpha(),
                                            (TILE_SIZE_BOARD, TILE_SIZE_BOARD))
-                    for i in range(9)
+                    for i in range(30)
                 ],
                 'die': [],
                 'finish': [

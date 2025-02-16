@@ -22,7 +22,7 @@ LEFT_GAME_BOARD = 541
 TOP_GAME_BOARD = 251
 LEFT_SHOP = 845
 TOP_SHOP = 37
-FPS = 60
+FPS = 30
 SOUNDS = {
     "shopping": pygame.mixer.Sound('data/sound/shopping.mp3'),
     "ban": pygame.mixer.Sound('data/sound/ban.mp3')
@@ -84,9 +84,9 @@ def load_image(name, directory, colorkey=None):
     return image
 
 
-def render_text(screen, text, font_size, coords):
+def render_text(screen, text, font_size, coords, color=(0, 130, 149)):
     font = pygame.font.Font(FONT, font_size)
-    text_surface = font.render(str(text), True, pygame.Color(0, 130, 149))
+    text_surface = font.render(str(text), True, pygame.Color(color))
     screen.blit(text_surface, coords)
 
 
@@ -96,12 +96,12 @@ def terminate():
     sys.exit()
 
 
-def start_screen(screen, clock):
+def start_screen(screen, clock, coords):
     menu = load_image('menu.png', f'{DIR_DATA}/screen').convert_alpha()
     cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor").convert_alpha(), (50, 50))
     screen.blit(menu, (0, 0))
 
-    mouse_coord = (0, 0)
+    mouse_coord = coords
 
     while True:
         screen.blit(menu, (0, 0))
@@ -127,6 +127,47 @@ def start_screen(screen, clock):
                 if 68 <= pos[0] <= 428 and 596 <= pos[1] <= 745:
                     terminate()
             # -=-----------------------------------------------=-
+
+        if pygame.mouse.get_focused():
+            screen.blit(cursor_image, mouse_coord)
+
+        clock.tick(FPS)
+        pygame.display.flip()
+
+
+def finsh_screen(screen, clock, is_win):
+    if is_win:
+        background = load_image('winground.png', f'{DIR_DATA}/screen').convert_alpha()
+        color = (0, 103, 139)
+    else:
+        background = load_image('dieground.png', f'{DIR_DATA}/screen').convert_alpha()
+        color = (213, 213, 0)
+    cursor_image = pygame.transform.scale(load_image("cursor.png", "data/cursor").convert_alpha(), (50, 50))
+    screen.blit(background, (0, 0))
+
+    mouse_coord = (0, 0)
+
+    while True:
+        screen.blit(background, (0, 0))
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                terminate()
+            if event.type == pygame.MOUSEMOTION:
+                mouse_coord = event.pos
+            # -=-------------------=BUTTONS=-------------------=-
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                pos = event.pos
+                if 0 <= pos[0] <= 250 and 1000 <= pos[1] <= 1080:
+                    return mouse_coord
+            # -=-----------------------------------------------=-
+
+        # -=---------------------------------=STATISTIC=---------------------------------=-
+        stat = statistics.get_data()
+        render_text(screen, stat["time"], 32, (1797, 620), color)
+        render_text(screen, stat["enemy_killed"], 32, (1795, 722), color)
+        render_text(screen, stat["unit_killed"], 32, (1795, 840), color)
+        render_text(screen, stat["money"], 32, (1795, 965), color)
+        # -=---------------------------------=--------------------------------------------=-
 
         if pygame.mouse.get_focused():
             screen.blit(cursor_image, mouse_coord)
@@ -442,7 +483,8 @@ def main():
     running = True
     game_paused = False
 
-    mouse_coord = start_screen(screen, clock)
+    mouse_coord = finsh_screen(screen, clock, False)
+    mouse_coord = start_screen(screen, clock, mouse_coord)
 
     # игровой цикл
     while running:
@@ -465,7 +507,7 @@ def main():
                 # settings_btn
                 if 15 <= pos[0] <= 90 and 990 <= pos[1] <= 1065:
                     game_paused = False
-                    mouse_coord = start_screen(screen, clock)
+                    mouse_coord = start_screen(screen, clock, mouse_coord)
                     continue
                 elif not game_paused:
                     game.get_click(event.pos, True)
