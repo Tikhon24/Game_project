@@ -507,7 +507,7 @@ def main():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     game_paused = False
-                    mouse_coord = start_screen(screen, clock)
+                    mouse_coord = start_screen(screen, clock, mouse_coord)
                     continue
                 if event.key == pygame.K_p:
                     game_paused = not game_paused
