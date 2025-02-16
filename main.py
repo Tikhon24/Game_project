@@ -281,6 +281,7 @@ class Spawn:
     def __init__(self, wave_counter, delay, enemies, statistics):
         self.wave_counter = wave_counter
         self.waves_dict = {i: self.generate_wave_matrix(i, enemies[i]) for i in range(1, 21)}
+        self.waves_dict[21] = [None]
         self.delay = delay
         self.last_update = pygame.time.get_ticks()
         self.enemies = enemies
@@ -300,6 +301,8 @@ class Spawn:
         if current_time - self.last_update >= self.delay:
             self.set_wave_counter(self.get_wave_counter() + 1)
             self.wave.finish_wave()
+            if self.wave_counter == 21:
+                return
             enemy_matrix = self.waves_dict[self.get_wave_counter()]
             self.wave = Wave(self.get_wave_counter(), 10000, enemy_matrix, self.statistics)
             self.last_update = current_time
@@ -350,6 +353,7 @@ class Game:
         # self.spawn = Spawn(self.wave_counter, self.wave_delay, self.enemies_for_spawn)
         self.spawn = Spawn(1, self.wave_delay, self.enemies_for_spawn, self.statistics)
 
+
     def create_unit(self, pos, unit):
         return unit.copy(pos)
 
@@ -364,7 +368,9 @@ class Game:
         render_text(screen, self.hp, 48, (95, 15))
 
     def is_win(self):
-        pass
+        if self.spawn.wave_counter == 21:
+            return True
+        return False
 
     def is_lose(self):
         if self.hp <= 0:
@@ -483,11 +489,18 @@ def main():
     running = True
     game_paused = False
 
-    mouse_coord = finsh_screen(screen, clock, False)
-    mouse_coord = start_screen(screen, clock, mouse_coord)
+    mouse_coord = start_screen(screen, clock, (0, 0))
 
     # игровой цикл
     while running:
+        if game.is_win():
+            mouse_coord = finsh_screen(screen, clock, True)
+            mouse_coord = start_screen(screen, clock, mouse_coord)
+
+        if game.is_lose():
+            mouse_coord = finsh_screen(screen, clock, False)
+            mouse_coord = start_screen(screen, clock, mouse_coord)
+
         # обработка событий
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
